@@ -34,5 +34,5 @@ $ python manage.py runserver
 ## Docker launch
 ### Build image
 ```
-docker build . -t  grkrcn-game-server_web
+docker-compose up
 ```
