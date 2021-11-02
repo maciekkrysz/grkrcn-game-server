@@ -38,6 +38,7 @@ class Participation(models.Model):
         LOSE = 2
         WIN_BY_DISCONNECT = 3
         LOSE_BY_DISCONNECT = 4
+        IN_PROGRESS = 5
 
     user = models.PositiveIntegerField()
     game = models.ForeignKey(
@@ -48,7 +49,7 @@ class Participation(models.Model):
     objects = ParticipationManager()
 
     def __str__(self):
-        return str(self.game.pk) + '-' + self.username
+        return str(self.game.pk) + '-' + str(self.user)
 
 
 class Move(models.Model):
@@ -60,4 +61,4 @@ class Move(models.Model):
     objects = MoveManager
 
     def __str__(self):
-        return self.participation.username + ': ' + str(self.move)
+        return str(self.participation.user) + ': ' + str(self.move)
