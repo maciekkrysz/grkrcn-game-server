@@ -1,11 +1,13 @@
 from django.db import models
+from safedelete.queryset import SafeDeleteQueryset
+from safedelete.managers import SafeDeleteManager
 
 
-class GameTypeQuerySet(models.QuerySet):
+class GameTypeQuerySet(SafeDeleteQueryset):
     pass
 
 
-class GameTypeManager(models.Manager):
+class GameTypeManager(SafeDeleteManager.from_queryset(GameTypeQuerySet)):
     def get_queryset(self):
         return GameTypeQuerySet(self.model, using=self._db)
 
