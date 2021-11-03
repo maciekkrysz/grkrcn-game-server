@@ -1,0 +1,104 @@
+[
+{
+  "model": "games.gametype",
+  "pk": 1,
+  "fields": {
+    "deleted": null,
+    "type_name": "makao"
+  }
+},
+{
+  "model": "games.gametype",
+  "pk": 2,
+  "fields": {
+    "deleted": null,
+    "type_name": "war"
+  }
+},
+{
+  "model": "games.game",
+  "pk": 1,
+  "fields": {
+    "start_state": "2C3D4H5S/KSQHJD0C",
+    "game_type": 1,
+    "datetime": "2021-11-02T10:16:19.364Z"
+  }
+},
+{
+  "model": "games.game",
+  "pk": 2,
+  "fields": {
+    "start_state": "2C3D4H5S/KSQHJD0C",
+    "game_type": 2,
+    "datetime": "2021-11-03T15:31:31.211Z"
+  }
+},
+{
+  "model": "games.participation",
+  "pk": 1,
+  "fields": {
+    "user": 1,
+    "game": 1,
+    "score": 3
+  }
+},
+{
+  "model": "games.participation",
+  "pk": 2,
+  "fields": {
+    "user": 2,
+    "game": 1,
+    "score": 4
+  }
+},
+{
+  "model": "games.participation",
+  "pk": 3,
+  "fields": {
+    "user": 1,
+    "game": 2,
+    "score": 5
+  }
+},
+{
+  "model": "games.participation",
+  "pk": 4,
+  "fields": {
+    "user": 3,
+    "game": 2,
+    "score": 5
+  }
+},
+{
+  "model": "games.move",
+  "pk": 1,
+  "fields": {
+    "participation": 1,
+    "move": "[\"2C\"]"
+  }
+},
+{
+  "model": "games.move",
+  "pk": 2,
+  "fields": {
+    "participation": 1,
+    "move": "[\"3D\"]"
+  }
+},
+{
+  "model": "games.move",
+  "pk": 3,
+  "fields": {
+    "participation": 2,
+    "move": "[\"KS\", \"QH\"]"
+  }
+},
+{
+  "model": "games.move",
+  "pk": 4,
+  "fields": {
+    "participation": 3,
+    "move": "[\"5S\", \"4H\"]"
+  }
+}
+]

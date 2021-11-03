@@ -34,5 +34,5 @@ $ python manage.py runserver
 ## Docker launch
 ### Build image
 ```
-docker-compose up
+docker-compose up --build
 ```
