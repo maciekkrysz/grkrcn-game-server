@@ -36,3 +36,18 @@ $ python manage.py runserver
 ```
 docker-compose up --build
 ```
+
+### Testing
+```
+docker compose exec web python manage.py test
+```
+
+### Populating DB
+```
+docker compose exec web python manage.py loaddata populate.json
+```
+
+### Creating \admin\ superuser
+```
+docker compose exec web python manage.py createsuperuser
+```
