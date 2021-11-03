@@ -8,6 +8,7 @@ from .managers import GameManager, ParticipationManager, MoveManager
 class GameType(SafeDeleteModel):
     _safedelete_policy = SOFT_DELETE
     type_name = models.CharField(max_length=50)
+    description = models.CharField(max_length=1000)
 
     class Meta:
         ordering = ['type_name']
