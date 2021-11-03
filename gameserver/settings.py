@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-ddr6#nu&1nge7595ioiso#2o0+_ckadwv^y19uy7kgic!@8!44
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['api-gateway', 'localhost']
 
 
 # Application definition
