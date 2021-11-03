@@ -9,6 +9,9 @@ class GameType(SafeDeleteModel):
     _safedelete_policy = SOFT_DELETE
     type_name = models.CharField(max_length=50)
 
+    class Meta:
+        ordering = ['type_name']
+
     def __str__(self):
         return self.type_name
 
