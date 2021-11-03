@@ -39,15 +39,15 @@ docker-compose up --build
 
 ### Testing
 ```
-docker compose exec web python manage.py test
+docker compose exec game_server python manage.py test
 ```
 
 ### Populating DB
 ```
-docker compose exec web python manage.py loaddata populate.json
+docker compose exec game_server python manage.py loaddata populate.json
 ```
 
 ### Creating \admin\ superuser
 ```
-docker compose exec web python manage.py createsuperuser
+docker compose exec game_server python manage.py createsuperuser
 ```
