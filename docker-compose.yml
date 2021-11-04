@@ -9,16 +9,12 @@ services:
       interval: 10s
       retries: 10
     restart: always
-    environment:
-      - POSTGRES_USER=root
-      - POSTGRES_PASSWORD=password
-      - APP_DB_USER=postgres
-      - APP_DB_PASS=postgres
-      - APP_DB_NAME=docker
+    env_file: 
+      - .env
     volumes:
       - ./db:/docker-entrypoint-initdb.d/
     ports:
-      - 5432:5432
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
 
   game_server:
     build: .
@@ -26,11 +22,13 @@ services:
     command: >
       sh -c "python manage.py makemigrations games &&
              python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8000"
+             python manage.py runserver 0.0.0.0:${GAME_SERVER_PORT}"
     volumes:
       - .:/code
+    env_file:
+      - .env
     ports:
-      - "8000:8000"
+      - ${GAME_SERVER_PORT}:${GAME_SERVER_PORT}
     depends_on:
       - postgres
       

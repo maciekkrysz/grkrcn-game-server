@@ -19,6 +19,8 @@ Windows
 ```
 $ pip install -r requirements.txt
 ```
+### .env
+Create .env file or rename .env.local to .env
 
 ## Development server
 ### Do migration
