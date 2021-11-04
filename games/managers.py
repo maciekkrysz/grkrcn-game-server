@@ -1,15 +1,21 @@
 from django.db import models
 from safedelete.queryset import SafeDeleteQueryset
-from safedelete.managers import SafeDeleteManager
+from safedelete.managers import SafeDeleteManager, DELETED_INVISIBLE
+from .resources import normalize_str
 
 
 class GameTypeQuerySet(SafeDeleteQueryset):
-    pass
+    def get_typegame_lower_nospecial(self, type_name):
+        pass
 
 
-class GameTypeManager(SafeDeleteManager.from_queryset(GameTypeQuerySet)):
-    def get_queryset(self):
-        return GameTypeQuerySet(self.model, using=self._db)
+class GameTypeManager(SafeDeleteManager):
+    def get_typegame_lower_nospecial(self, type_name):
+        for typegame in self.get_queryset():
+            print()
+            if normalize_str(typegame.type_name).lower() == type_name:
+                return typegame
+        # return self.get_queryset().get_typegame_lower_nospecial(type_name)
 
 
 class GameQuerySet(models.QuerySet):

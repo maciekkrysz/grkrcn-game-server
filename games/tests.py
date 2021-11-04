@@ -8,7 +8,7 @@ class GameTypeModelTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.gametype = GameType.objects.create(
-            type_name='makao',
+            type_name='Wąr',
         )
         cls.game1 = Game.objects.create(
             game_type=cls.gametype,
@@ -25,6 +25,10 @@ class GameTypeModelTests(TestCase):
         self.gametype.delete()
         self.assertEqual(GameType.objects.count(), 0)
         self.assertEqual(Game.objects.count(), 2)
+
+    def test_get_typegame_lower_nospecial(self):
+        self.assertEqual(
+            GameType.objects.get_typegame_lower_nospecial('war'), self.gametype)
 
 
 class GameModelTests(TestCase):

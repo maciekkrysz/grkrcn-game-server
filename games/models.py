@@ -2,13 +2,14 @@ from django.db import models
 from django.db.models import manager
 from safedelete.models import SafeDeleteModel, SOFT_DELETE
 from django.contrib.postgres.fields import ArrayField
-from .managers import GameManager, ParticipationManager, MoveManager
+from .managers import GameManager, GameTypeManager, ParticipationManager, MoveManager
 
 
 class GameType(SafeDeleteModel):
     _safedelete_policy = SOFT_DELETE
     type_name = models.CharField(max_length=50)
     description = models.CharField(max_length=1000)
+    objects = GameTypeManager()
 
     class Meta:
         ordering = ['type_name']
