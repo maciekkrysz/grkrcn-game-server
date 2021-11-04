@@ -132,12 +132,15 @@ STATIC_URL = '/static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+REDIS_HOST = os.environ.get('REDIS_HOST')
+REDIS_PORT = os.environ.get('REDIS_PORT')
+
 ASGI_APPLICATION = 'gameserver.asgi.application'
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            "hosts": [('redis', os.environ.get('REDIS_PORT'))],
+            "hosts": [(REDIS_HOST, REDIS_PORT)],
         },
     },
 }
