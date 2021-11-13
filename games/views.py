@@ -47,6 +47,9 @@ def games(request):
 
 
 def game_lobbies(request, game_name):
+    request.session['cos2222'] = 'costam'
+    print(request.session.__dict__)
+    request.session.save()
     games = redis_list_from_dict('games', f'.{game_name}')
     # games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
     games_to_send = []
@@ -90,7 +93,8 @@ def game_create(request, game_name):
 
 
 def saml_view(request):
-
+    print('___SAML VIEW___')
+    print(request.session.__dict__)
     req = prepare_django_request(request)
     auth = init_saml_auth(req)
     errors = []
@@ -100,6 +104,13 @@ def saml_view(request):
     attributes = False
     paint_logout = False
 
+
+    request_id = None
+    if 'AuthNRequestID' in request.session:
+        request_id = request.session['AuthNRequestID']
+
+    # auth.process_response(request_id=request_id) 
+    # print(auth.get_attributes())
     if 'sso' in req['get_data']:
         return HttpResponseRedirect(auth.login())
         # If AuthNRequest ID need to be stored in order to later validate it, do instead
@@ -107,27 +118,16 @@ def saml_view(request):
         # request.session['AuthNRequestID'] = auth.get_last_request_id()
         # return HttpResponseRedirect(sso_built_url)
     elif 'sso2' in req['get_data']:
-        return_to = OneLogin_Saml2_Utils.get_self_url(req) + reverse('attrs')
-        return HttpResponseRedirect(auth.login(return_to))
-    elif 'slo' in req['get_data']:
-        name_id = session_index = name_id_format = name_id_nq = name_id_spnq = None
-        if 'samlNameId' in request.session:
-            name_id = request.session['samlNameId']
-        if 'samlSessionIndex' in request.session:
-            session_index = request.session['samlSessionIndex']
-        if 'samlNameIdFormat' in request.session:
-            name_id_format = request.session['samlNameIdFormat']
-        if 'samlNameIdNameQualifier' in request.session:
-            name_id_nq = request.session['samlNameIdNameQualifier']
-        if 'samlNameIdSPNameQualifier' in request.session:
-            name_id_spnq = request.session['samlNameIdSPNameQualifier']
-
-        return HttpResponseRedirect(auth.logout(name_id=name_id, session_index=session_index, nq=name_id_nq, name_id_format=name_id_format, spnq=name_id_spnq))
-        # If LogoutRequest ID need to be stored in order to later validate it, do instead
-        # slo_built_url = auth.logout(name_id=name_id, session_index=session_index)
-        # request.session['LogoutRequestID'] = auth.get_last_request_id()
-        # return HttpResponseRedirect(slo_built_url)
+        print(OneLogin_Saml2_Utils.get_self_url(req))
+        # return_to = OneLogin_Saml2_Utils.get_self_url(req) # api-gateway
+        # return to game_id lobby
+        print('------------')
+        print(request.session.__dict__)
+        return_to = 'localhost:8080/games/'
+        print(auth.login(return_to))
+        return HttpResponse(auth.login(return_to), status=401)
     elif 'acs' in req['get_data']:
+        req['post_data']['SAMLResponse'] = req['get_data']['SAMLResponse']
         request_id = None
         if 'AuthNRequestID' in request.session:
             request_id = request.session['AuthNRequestID']
@@ -135,22 +135,44 @@ def saml_view(request):
         auth.process_response(request_id=request_id)
         errors = auth.get_errors()
         not_auth_warn = not auth.is_authenticated()
-
+        print(OneLogin_Saml2_Utils.TIME_FORMAT)
+        print(OneLogin_Saml2_Utils.TIME_FORMAT_2)
+        print(OneLogin_Saml2_Utils.TIME_FORMAT_WITH_FRAGMENT)
+        # print(OneLogin_Saml2_Utils.parse_SAML_to_time('2016-06-02T13:53:14.925+01:00'))
+        request.session['cos'] = 'costam'
+        print(request.session)
+        print(request.session.__dict__)
+        print(errors)
         if not errors:
             if 'AuthNRequestID' in request.session:
                 del request.session['AuthNRequestID']
+            request.session.set_expiry(300)
+            print(request.session.get_expiry_date())
             request.session['samlUserdata'] = auth.get_attributes()
             request.session['samlNameId'] = auth.get_nameid()
             request.session['samlNameIdFormat'] = auth.get_nameid_format()
             request.session['samlNameIdNameQualifier'] = auth.get_nameid_nq()
             request.session['samlNameIdSPNameQualifier'] = auth.get_nameid_spnq()
             request.session['samlSessionIndex'] = auth.get_session_index()
-            if 'RelayState' in req['post_data'] and OneLogin_Saml2_Utils.get_self_url(req) != req['post_data']['RelayState']:
-                # To avoid 'Open Redirect' attacks, before execute the redirection confirm
-                # the value of the req['post_data']['RelayState'] is a trusted URL.
-                return HttpResponseRedirect(auth.redirect_to(req['post_data']['RelayState']))
-        elif auth.get_settings().is_debug_active():
-            error_reason = auth.get_last_error_reason()
+            print(request.session.__dict__)
+            print(req['post_data'].keys())
+            print(auth.get_session_expiration())
+            print(request.session.keys())
+            if not '_SessionBase__session_key' in request.session.keys():
+                print('zapisywanie sesji')
+                request.session.save()
+            print(request.session.__dict__)
+            return JsonResponse({'authorized': True})
+            
+        return JsonResponse({'authorized': False}, status=401)
+            # if 'RelayState' in req['post_data'] and OneLogin_Saml2_Utils.get_self_url(req) != req['post_data']['RelayState']:
+            #     # To avoid 'Open Redirect' attacks, before execute the redirection confirm
+            #     # the value of the req['post_data']['RelayState'] is a trusted URL.
+            #     print(req['post_data']['RelayState'])
+            #     # return HttpResponseRedirect(auth.redirect_to(req['post_data']['RelayState']))
+            #     return HttpResponseRedirect(auth.redirect_to('http://localhost:8000/games/attrs/'))
+        # elif auth.get_settings().is_debug_active():
+        #     error_reason = auth.get_last_error_reason()
     elif 'sls' in req['get_data']:
         request_id = None
         if 'LogoutRequestID' in request.session:
@@ -173,28 +195,103 @@ def saml_view(request):
         paint_logout = True
         if len(request.session['samlUserdata']) > 0:
             attributes = request.session['samlUserdata'].items()
-
-    return render(request, 'index.html', {'errors': errors, 'error_reason': error_reason, 'not_auth_warn': not_auth_warn, 'success_slo': success_slo,
+    print(req['get_data'])
+    return JsonResponse({'errors': errors, 'error_reason': error_reason, 'not_auth_warn': not_auth_warn, 'success_slo': success_slo,
                                           'attributes': attributes, 'paint_logout': paint_logout})
+    # return render(request, 'index.html', {'errors': errors, 'error_reason': error_reason, 'not_auth_warn': not_auth_warn, 'success_slo': success_slo,
+    #                                       'attributes': attributes, 'paint_logout': paint_logout})
 
 
 def attrs(request):
-    paint_logout = False
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print(request)
+    req = prepare_django_request(request)
+    auth = init_saml_auth(req)
+    errors = []
+    error_reason = None
+    not_auth_warn = False
+    success_slo = False
     attributes = False
+    paint_logout = False
 
-    if 'samlUserdata' in request.session:
-        paint_logout = True
-        if len(request.session['samlUserdata']) > 0:
-            attributes = request.session['samlUserdata'].items()
-    return render(request, 'attrs.html',
-                  {'paint_logout': paint_logout,
-                   'attributes': attributes})
+    # request['post_data'] = {
+    #         'SAMLResponse': saml_response
+    #     }
+    print(req['post_data'])
+
+    print(1)
+    saml_settings = OneLogin_Saml2_Settings(
+        settings=None, custom_base_path=settings.SAML_FOLDER)
+
+    auth2 = OneLogin_Saml2_Auth(req, old_settings=saml_settings)
+    # print(auth2.get_session_index())
+    # print(req['post_data']['SAMLResponse'])
+
+    request_id = None
+    if 'AuthNRequestID' in request.session:
+        request_id = request.session['AuthNRequestID']
+    print(2)
+    print(request.__dict__.keys())
+    # print(request.__dict__)
+    # for el in request.__dict__.items():
+    #     print(el)
+    #     print()
+    print(request.session.__dict__.items())
+    print('keys============')
+    print(request.GET.keys())
+    # request_id = request.GET['SAMLResponse']
+    print(request.session.keys())
+    print(request_id)
+    print(auth.__dict__)
+    # auth.process_response(request_id=request_id) 
+    print('---')
+    print(auth.get_session_index())
+    print(auth.get_attributes())
+    print('\n\n\n')
+
+
+    # print(request.POST)
+
+    # saml_settings = OneLogin_Saml2_Settings(
+    #     settings=None, custom_base_path=settings.SAML_FOLDER, sp_validation_only=True)
+    # cos = OneLogin_Saml2_Response(saml_settings,request.POST['SAMLResponse'])
+
+    # print(cos.is_valid(request.POST))
+    # print(cos.get_attributes())
+    # print(cos.get_session_index())
+    # print(cos.get_nameid_data())
+    # print(cos.get_nameid())
+    # print(cos.response)
+    # time = OneLogin_Saml2_Utils.now()
+    # print(OneLogin_Saml2_Utils.parse_time_to_SAML(time))
+    # print(cos.validate_timestamps())
+
+    # print(cos.get_session_not_on_or_after())
+    # print()
+
+    # print(request.session.__dict__)
+    # if 'samlUserdata' in request.session:
+    #     paint_logout = True
+    #     if len(request.session['samlUserdata']) > 0:
+    #         attributes = request.session['samlUserdata'].items()
+    return JsonResponse({'attributes': ''})
+    # return render(request, 'attrs.html',
+    #               {'paint_logout': paint_logout,
+    #                'attributes': attributes})
 
 
 def metadata(request):
     # req = prepare_django_request(request)
     # auth = init_saml_auth(req)
     # saml_settings = auth.get_settings()
+    # from onelogin.saml2.metadata import OneLogin_Saml2_Metadata
+    # OneLogin_Saml2_Metadata.sign_metadata()
     saml_settings = OneLogin_Saml2_Settings(
         settings=None, custom_base_path=settings.SAML_FOLDER, sp_validation_only=True)
     metadata = saml_settings.get_sp_metadata()
