@@ -13,6 +13,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from onelogin.saml2.auth import OneLogin_Saml2_Auth
 from onelogin.saml2.settings import OneLogin_Saml2_Settings
 from onelogin.saml2.utils import OneLogin_Saml2_Utils
+from onelogin.saml2.response import OneLogin_Saml2_Response
 
 
 def init_saml_auth(req):
@@ -93,8 +94,7 @@ def game_create(request, game_name):
 
 
 def saml_view(request):
-    print('___SAML VIEW___')
-    print(request.session.__dict__)
+    
     req = prepare_django_request(request)
     auth = init_saml_auth(req)
     errors = []
@@ -103,7 +103,6 @@ def saml_view(request):
     success_slo = False
     attributes = False
     paint_logout = False
-
 
     request_id = None
     if 'AuthNRequestID' in request.session:
@@ -203,14 +202,6 @@ def saml_view(request):
 
 
 def attrs(request):
-    print('redirected')
-    print('redirected')
-    print('redirected')
-    print('redirected')
-    print('redirected')
-    print('redirected')
-    print('redirected')
-    print(request)
     req = prepare_django_request(request)
     auth = init_saml_auth(req)
     errors = []
@@ -224,63 +215,42 @@ def attrs(request):
     #         'SAMLResponse': saml_response
     #     }
     print(req['post_data'])
-
     print(1)
     saml_settings = OneLogin_Saml2_Settings(
         settings=None, custom_base_path=settings.SAML_FOLDER)
 
     auth2 = OneLogin_Saml2_Auth(req, old_settings=saml_settings)
-    # print(auth2.get_session_index())
-    # print(req['post_data']['SAMLResponse'])
+    print(auth2.get_session_index())
+    print(req['post_data']['SAMLResponse'])
 
     request_id = None
     if 'AuthNRequestID' in request.session:
         request_id = request.session['AuthNRequestID']
-    print(2)
-    print(request.__dict__.keys())
-    # print(request.__dict__)
-    # for el in request.__dict__.items():
-    #     print(el)
-    #     print()
-    print(request.session.__dict__.items())
-    print('keys============')
-    print(request.GET.keys())
-    # request_id = request.GET['SAMLResponse']
-    print(request.session.keys())
-    print(request_id)
-    print(auth.__dict__)
-    # auth.process_response(request_id=request_id) 
-    print('---')
-    print(auth.get_session_index())
+
+    auth.process_response(request_id=request_id) 
     print(auth.get_attributes())
     print('\n\n\n')
-
-
     # print(request.POST)
+    paint_logout = False
+    attributes = False
+    paint_logout = False
 
-    # saml_settings = OneLogin_Saml2_Settings(
-    #     settings=None, custom_base_path=settings.SAML_FOLDER, sp_validation_only=True)
-    # cos = OneLogin_Saml2_Response(saml_settings,request.POST['SAMLResponse'])
+    saml_settings = OneLogin_Saml2_Settings(
+        settings=None, custom_base_path=settings.SAML_FOLDER, sp_validation_only=True)
+    cos = OneLogin_Saml2_Response(saml_settings,request.POST['SAMLResponse'])
 
-    # print(cos.is_valid(request.POST))
-    # print(cos.get_attributes())
-    # print(cos.get_session_index())
-    # print(cos.get_nameid_data())
-    # print(cos.get_nameid())
-    # print(cos.response)
-    # time = OneLogin_Saml2_Utils.now()
-    # print(OneLogin_Saml2_Utils.parse_time_to_SAML(time))
-    # print(cos.validate_timestamps())
+    print(cos.is_valid(request.POST))
+    print(cos.get_attributes())
+    print(cos.get_session_index())
+    print(cos.get_nameid_data())
+    print(cos.get_nameid())
 
-    # print(cos.get_session_not_on_or_after())
-    # print()
-
-    # print(request.session.__dict__)
-    # if 'samlUserdata' in request.session:
-    #     paint_logout = True
-    #     if len(request.session['samlUserdata']) > 0:
-    #         attributes = request.session['samlUserdata'].items()
-    return JsonResponse({'attributes': ''})
+    if 'samlUserdata' in request.session:
+        paint_logout = True
+        if len(request.session['samlUserdata']) > 0:
+            attributes = request.session['samlUserdata'].items()
+    return JsonResponse({'paint_logout': paint_logout,
+                   'attributes': attributes})
     # return render(request, 'attrs.html',
     #               {'paint_logout': paint_logout,
     #                'attributes': attributes})
