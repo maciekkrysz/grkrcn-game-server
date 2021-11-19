@@ -19,7 +19,36 @@ def create_game(game_type, user_json):
 
 
 def connect_to_game(game_type, game_id, user):
+    return True
     game_class = get_class(game_type)
     if game_class.connect_to(game_id, user):
-        pass
-    pass
+        return True
+    return False
+
+
+def current_state(game_type, game_id):
+    return {
+        'hand_1': 4,
+        'hand_2': 3,
+        'stack_1': 15,
+        'stack_2': 12,
+        'cards_top': '2C',
+        'current_user': 1,
+    }
+
+
+def current_hand(game_type, game_id, user):
+    game_class = get_class(game_type)
+    # mocked
+    return ['2C', '3D', '4H', '5S']
+
+
+def possible_moves(game_type, game_id, user, moves_before=[]):
+    game_class = get_class(game_type)
+    # mocked
+    return ['3D', '5S', 'take', 'pass']
+
+
+def make_move(game_type, game_id, user, moves):
+    game_class = get_class(game_type)
+    return True
