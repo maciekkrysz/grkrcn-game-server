@@ -47,15 +47,15 @@ def start_game(type_game, room_name):
 
 def game_info(game_type, game_id):
     players = {
-        '1': {
+        'p1': {
             'nickname': 'p',
             'ranking': 1000,
             'ready': True,
             'active': False,
         },
-        '2': None,
-        '3': None,
-        '4': None
+        'p2': None,
+        'p3': None,
+        'p4': None
     }
     return {
         'players': players,
@@ -66,12 +66,12 @@ def game_info(game_type, game_id):
 def current_state(game_type, game_id):
 
     players = {
-        '1': {
+        'p1': {
             'cards_hand': 3,
             'time': 200,
             'points': 10,
         },
-        '2': None
+        'p2': None
     }
 
     return {
