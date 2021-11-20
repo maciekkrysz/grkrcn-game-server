@@ -1,6 +1,15 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from .classes.games_handler import connect_to_game, make_move, possible_moves, current_hand, current_state
+from .classes.games_handler import connect_to_game, make_move, possible_moves, \
+    current_hand, current_state, game_info, game_self_info, mark_ready, start_game_possible, \
+    start_game
+
+
+public_messages = {
+    'current_state_message',
+    'ready_message',
+    'games_info_message',
+}
 
 
 class GameConsumer(AsyncWebsocketConsumer):
@@ -25,6 +34,17 @@ class GameConsumer(AsyncWebsocketConsumer):
         if connect_to_game(self.type_game, self.room_name, self.user):
             await self.accept()
 
+        await self.channel_layer.group_send(
+            self.room_group_name, {
+                'type': 'games_info_message'
+            }
+        )
+        await self.channel_layer.group_send(
+            self.room_group_name, {
+                'type': 'games_self_info_message'
+            }
+        )
+
     async def disconnect(self, close_code):
         # Leave room group
         await self.channel_layer.group_discard(
@@ -35,6 +55,17 @@ class GameConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard(
             self.user,
             self.channel_name
+        )
+
+        await self.channel_layer.group_send(
+            self.room_group_name, {
+                'type': 'current_state_message'
+            }
+        )
+        await self.channel_layer.group_send(
+            self.room_group_name, {
+                'type': 'games_info_message'
+            }
         )
 
     # Receive message from WebSocket
@@ -57,33 +88,66 @@ class GameConsumer(AsyncWebsocketConsumer):
                 text_data_json
             )
 
+    async def games_info_message(self, event):
+        info = game_info(self.type_game, self.room_name)
+        await self.send(text_data=json.dumps({
+            'hand': info,
+            'type': 'games_info'
+        }))
+
+    async def games_self_info_message(self, event):
+        info = game_self_info(self.type_game, self.room_name)
+        await self.send(text_data=json.dumps({
+            'hand': info,
+            'type': 'games_self_info'
+        }))
+
+    async def ready_message(self, event):
+        mark_ready(self.type_game, self.room_name, self.user)
+        if start_game_possible(self.type_game, self.room_name):
+            start_game(self.type_game, self.room_name)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {'type': 'current_state_message'}
+            )
+
     async def current_hand_message(self, event):
         hand = current_hand(self.type_game, self.room_name, self.user)
         await self.send(text_data=json.dumps({
-            'hand': hand
+            'hand': hand,
+            'type': 'current_hand'
         }))
 
     async def current_state_message(self, event):
         state = current_state(self.type_game, self.room_name)
-        await self.send(text_data=json.dumps(state))
+        await self.send(text_data=json.dumps({
+            'state': state,
+            'type': 'current_state'
+        }))
 
     async def possible_moves_message(self, event):
-        if 'moves_before' not in event:
-            event['moves_before'] = []
         moves = possible_moves(
-            self.type_game, self.room_name, self.user, event['moves_before'])
+            self.type_game, self.room_name, self.user)
         await self.send(text_data=json.dumps({
-            'possible_moves': moves
+            'possible_moves': moves,
+            'type': 'possible_moves'
         }))
 
     async def make_move_message(self, event):
         moves = event['moves']
+        print(moves)
         if make_move(self.type_game, self.room_name, self.user, moves):
             await self.send(text_data='Correct')
             await self.channel_layer.group_send(
                 self.room_group_name,
                 {'type': 'current_state_message'}
             )
+            # if end_game
+        else:
+            await self.send(text_data='Incorrect')
+
+    async def end_game_message(self, event):
+        pass
 
     # Receive message from room group
     async def chat_message(self, event):

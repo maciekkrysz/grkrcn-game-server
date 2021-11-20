@@ -26,12 +26,59 @@ def connect_to_game(game_type, game_id, user):
     return False
 
 
-def current_state(game_type, game_id):
+def game_self_info(game_type, game_id):
+    game_self = {
+        'chair': '1'
+    }
+    return game_self
+
+
+def mark_ready(game_type, game_id, user):
+    return True
+
+
+def start_game_possible(game_type, game_id):
+    return True
+
+
+def start_game(type_game, room_name):
+    pass
+
+
+def game_info(game_type, game_id):
+    players = {
+        '1': {
+            'nickname': 'p',
+            'ranking': 1000,
+            'ready': True,
+            'active': False,
+        },
+        '2': None,
+        '3': None,
+        '4': None
+    }
     return {
-        'hand_1': 4,
-        'hand_2': 3,
-        'stack_1': 15,
-        'stack_2': 12,
+        'players': players,
+        'state': 'waiting'  # in progress
+    }
+
+
+def current_state(game_type, game_id):
+
+    players = {
+        '1': {
+            'cards_hand': 3,
+            'time': 200,
+            'points': 10,
+        },
+        '2': None
+    }
+
+    return {
+        'players': players,
+        'current_player': 1,
+        'stack_throw': 12,
+        'stack_draw': 4,
         'cards_top': '2C',
         'current_user': 1,
     }
@@ -46,7 +93,10 @@ def current_hand(game_type, game_id, user):
 def possible_moves(game_type, game_id, user, moves_before=[]):
     game_class = get_class(game_type)
     # mocked
-    return ['3D', '5S', 'take', 'pass']
+    return {
+        'possible_actions': ['pass', 'take', 'throw'],
+        'possible_moves': ['3C', '4H']
+    }
 
 
 def make_move(game_type, game_id, user, moves):
