@@ -5,7 +5,7 @@ from .classes.games_handler import connect_to_game, make_move, possible_moves, \
     start_game
 
 
-public_messages = {
+PUBLIC_MESSAGES = {
     'current_state_message',
     'ready_message',
     'games_info_message',
@@ -72,19 +72,17 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         text_data_json['type'] += '_message'
-        if 'secret' not in text_data_json:
-            text_data_json['secret'] = False
 
-        if text_data_json['secret']:
-            # Send reply to sender
-            await self.channel_layer.group_send(
-                self.user,
-                text_data_json
-            )
-        else:
+        if text_data_json['type'] in PUBLIC_MESSAGES:
             # Send message to room group
             await self.channel_layer.group_send(
                 self.room_group_name,
+                text_data_json
+            )
+        else:
+            # Send reply to sender
+            await self.channel_layer.group_send(
+                self.user,
                 text_data_json
             )
 
