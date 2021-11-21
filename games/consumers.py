@@ -7,7 +7,6 @@ from .classes.games_handler import connect_to_game, debug_info, is_game_finished
 
 PUBLIC_MESSAGES = {
     'current_state_message',
-    # 'ready_message',
     'games_info_message',
 }
 
@@ -75,7 +74,6 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         text_data_json['type'] += '_message'
-        print('receive1')
         if text_data_json['type'] in PUBLIC_MESSAGES:
             # Send message to room group
             await self.channel_layer.group_send(
@@ -88,8 +86,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.user['nickname'],
                 text_data_json
             )
-        print('receive2')
-        print(text_data_json['type'])
         print(debug_info(self.type_game, self.room_name))
 
     async def games_info_message(self, event):
@@ -108,7 +104,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def ready_message(self, event):
-        print('tutaj')
         mark_ready(self.type_game, self.room_name,
                    self.user['nickname'], event['value'])
         await self.channel_layer.group_send(

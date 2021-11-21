@@ -157,6 +157,8 @@ class Game(ABC):
     @classmethod
     def start_game_possible(cls, game_id):
         game = cls.path_to_game(game_id)
+        if redis.jsonget('games', f'.{game}.status') != 'waiting':
+            return False
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
         players = len(redis.jsonget('games', f'.{game}.players'))
@@ -216,11 +218,11 @@ class Game(ABC):
         current_user = cls.current_player(game_id)
 
         state = {
+            'current_user': current_user,
             'players': players,
             'stack_draw': stack_draw,
             'stack_throw': stack_throw,
             'cards_top': cards_top,
-            'current_user': current_user,
         }
         return state
 

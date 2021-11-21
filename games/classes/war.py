@@ -37,7 +37,7 @@ class War(Game):
         game = cls.path_to_game(game_id)
         for player in redis.jsonget('games', f'.{game}.players'):
             redis.jsonset(
-                'games', f'.{game}.players.{player}.last_action', 'throw')
+                'games', f'.{game}.players.{player}.last_action', 'take')
 
     @classmethod
     def possible_moves(cls, game_id, user):
@@ -65,14 +65,9 @@ class War(Game):
             if action == 'take':
                 cards = redis.jsonget('games', f'.{game}.stack_draw')
                 random_card = get_random_card(cards)
-                print(random_card)
                 card_index = redis.jsonarrindex('games', f'.{game}.stack_draw', random_card)
                 redis.jsonarrpop('games', f'.{game}.stack_draw', card_index)
-                player_cards = redis.jsonget('games' f'.{game}.players.{player}.hand')
-                print(f'.{game}.players.{player}.hand')
-                print(player_cards)
-                player_cards.append(random_card)
-                redis.jsonset('games' f'.{game}.players.{player}.hand', player_cards)
+                redis.jsonarrappend('games', f'.{game}.players.{player}.hand', random_card)
                 redis.jsonset('games', f'.{game}.current_player', cls.get_next_player(game_id))
 
             elif action == 'throw' and move in poss_moves['possible_moves']:
