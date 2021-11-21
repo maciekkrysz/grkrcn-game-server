@@ -19,86 +19,73 @@ def create_game(game_type, user_json):
 
 
 def connect_to_game(game_type, game_id, user):
-    return True
     game_class = get_class(game_type)
     if game_class.connect_to(game_id, user):
         return True
     return False
 
 
-def game_self_info(game_type, game_id):
+def disconnect_from_game(game_type, game_id, user):
+    game_class = get_class(game_type)
+    game_class.disconnect_from(game_id, user)
+
+
+def game_self_info(game_type, game_id, user):
+    game_class = get_class(game_type)
     game_self = {
-        'chair': '1'
+        'chair': game_class.get_user_chair(game_id, user)
     }
     return game_self
 
 
-def mark_ready(game_type, game_id, user):
-    return True
+def mark_ready(game_type, game_id, user, value):
+    game_class = get_class(game_type)
+    game_class.mark_ready(game_id, user, value)
 
 
 def start_game_possible(game_type, game_id):
-    return True
+    game_class = get_class(game_type)
+    return game_class.start_game_possible(game_id)
 
 
-def start_game(type_game, room_name):
+def start_game(game_type, game_id):
+    game_class = get_class(game_type)
+    game_class.start_game(game_id)
     pass
 
 
 def game_info(game_type, game_id):
-    players = {
-        'p1': {
-            'nickname': 'p',
-            'ranking': 1000,
-            'ready': True,
-            'active': False,
-        },
-        'p2': None,
-        'p3': None,
-        'p4': None
-    }
-    return {
-        'players': players,
-        'state': 'waiting'  # in progress
-    }
+    game_class = get_class(game_type)
+    return game_class.game_info(game_id)
 
 
 def current_state(game_type, game_id):
-
-    players = {
-        'p1': {
-            'cards_hand': 3,
-            'time': 200,
-            'points': 10,
-        },
-        'p2': None
-    }
-
-    return {
-        'players': players,
-        'current_player': 1,
-        'stack_throw': 12,
-        'stack_draw': 4,
-        'cards_top': '2C',
-        'current_user': 1,
-    }
+    game_class = get_class(game_type)
+    if game_class.is_game_active(game_id):
+        return game_class.game_state(game_id)
 
 
 def current_hand(game_type, game_id, user):
     game_class = get_class(game_type)
-    # mocked
-    return ['2C', '3D', '4H', '5S']
+    return game_class.get_hand(game_id, user)
 
 
-def possible_moves(game_type, game_id, user, moves_before=[]):
+def possible_moves(game_type, game_id, user):
     game_class = get_class(game_type)
-    # mocked
-    return {
-        'possible_actions': ['pass', 'take', 'throw'],
-        'possible_moves': ['3C', '4H']
-    }
+    return game_class.possible_moves(game_id, user)
 
 
-def make_move(game_type, game_id, user, moves):
+def make_move(game_type, game_id, user, action, move):
     game_class = get_class(game_type)
+    game_class.make_move(game_id, user, action, move)
     return True
+
+
+def is_game_finished(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.is_game_finished(game_id)
+
+
+def debug_info(game_type, game_id):
+    game_class = get_class(game_type)
+    game_class.debug_info(game_id)
