@@ -51,7 +51,6 @@ def start_game_possible(game_type, game_id):
 def start_game(game_type, game_id):
     game_class = get_class(game_type)
     game_class.start_game(game_id)
-    pass
 
 
 def game_info(game_type, game_id):
@@ -77,8 +76,7 @@ def possible_moves(game_type, game_id, user):
 
 def make_move(game_type, game_id, user, action, move):
     game_class = get_class(game_type)
-    game_class.make_move(game_id, user, action, move)
-    return True
+    return game_class.make_move(game_id, user, action, move)
 
 
 def is_game_finished(game_type, game_id):

@@ -1,8 +1,8 @@
 import random
-cards_prefix = {
+cards_prefix = [
     '2', '3', '4', '5', '6', '7', '8',
     '9', '0', 'J', 'Q', 'K', 'A'
-}
+]
 cards_symbols = {'C', 'D', 'H', 'S'}
 
 

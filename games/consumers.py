@@ -1,4 +1,5 @@
 import json
+from typing import final
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .classes.games_handler import connect_to_game, debug_info, is_game_finished, make_move, possible_moves, \
     current_hand, current_state, game_info, game_self_info, mark_ready, start_game_possible, \
@@ -152,7 +153,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {'type': 'current_state_message'}
             )
-            # if end_game
+            if is_game_finished(self.type_game, self.room_name):
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {'type': 'end_game_message'}
+                )
         else:
             await self.send(text_data='Incorrect')
 
