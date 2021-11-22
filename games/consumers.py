@@ -35,15 +35,16 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.accept()
 
         await self.channel_layer.group_send(
-            self.room_group_name, {
-                'type': 'games_info_message'
-            }
-        )
-        await self.channel_layer.group_send(
             self.user['nickname'], {
                 'type': 'games_self_info_message'
             }
         )
+
+        await self.channel_layer.group_send(
+            self.room_group_name, {
+                'type': 'games_info_message'
+            }
+        )       
 
     async def disconnect(self, close_code):
         disconnect_from_game(
@@ -92,7 +93,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def games_info_message(self, event):
         info = game_info(self.type_game, self.room_name)
         await self.send(text_data=json.dumps({
-            'info': info,
+            'data': info,
             'type': 'games_info'
         }))
 
@@ -100,7 +101,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         info = game_self_info(
             self.type_game, self.room_name, self.user['nickname'])
         await self.send(text_data=json.dumps({
-            'hand': info,
+            'data': info,
             'type': 'games_self_info'
         }))
 
@@ -122,14 +123,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         hand = current_hand(self.type_game, self.room_name,
                             self.user['nickname'])
         await self.send(text_data=json.dumps({
-            'hand': hand,
+            'data': hand,
             'type': 'current_hand'
         }))
 
     async def current_state_message(self, event):
         state = current_state(self.type_game, self.room_name)
         await self.send(text_data=json.dumps({
-            'state': state,
+            'data': state,
             'type': 'current_state'
         }))
 
@@ -137,7 +138,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         moves = possible_moves(
             self.type_game, self.room_name, self.user['nickname'])
         await self.send(text_data=json.dumps({
-            'possible_moves': moves,
+            'data': moves,
             'type': 'possible_moves'
         }))
 

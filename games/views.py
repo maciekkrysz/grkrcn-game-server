@@ -9,11 +9,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 # Create your views here.
 
 
-def room(request, game_name, room_id):
-    return render(request, 'games/room.html', {
-        'room_id': room_id,
-        'game_name': game_name
-    })
+# def room(request, game_name, room_id):
+#     return render(request, 'games/room.html', {
+#         'room_id': room_id,
+#         'game_name': game_name
+#     })
 
 
 def games(request):
@@ -24,14 +24,14 @@ def games(request):
 
 
 def game_lobby(request, game_name):
-    games = redis_list_from_dict('available_games', f'.{game_name}')
-    games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
+    games = redis_list_from_dict('games', f'.{game_name}')
+    # games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
     games_to_send = []
     for game in games:
         k, v = game.popitem()
         v['game_id'] = k
         games_to_send.append(v)
-    return JsonResponse({game_name: games_to_send})
+    return JsonResponse({'lobbies': games_to_send})
     pass
 
 
