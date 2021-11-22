@@ -23,7 +23,7 @@ def games(request):
     return JsonResponse(data, safe=False)
 
 
-def game_lobby(request, game_name):
+def games_lobby(request, game_name):
     games = redis_list_from_dict('available_games', f'.{game_name}')
     games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
     games_to_send = []
@@ -34,6 +34,8 @@ def game_lobby(request, game_name):
     return JsonResponse({game_name: games_to_send})
     pass
 
+def game_lobby(request, game_name, game_id):
+    pass
 
 def game_info(request, game_name):
     for typegame in list(GameType.objects.all().values('type_name', 'description')):

@@ -4,8 +4,8 @@ from . import views
 
 urlpatterns = [
     path('', views.games, name='games'),
-    path('<str:game_name>/<str:room_id>/', views.room, name='room'),
+    # path('<str:game_name>/<str:room_id>/', views.room, name='room'),
     path('<str:game_name>/info/', views.game_info, name='game_info'),
     path('<str:game_name>/lobby/create/', views.game_create, name='game_create'),
-    path('<str:game_name>/lobby/list/', views.game_lobby, name='game_lobby'),
+    path('<str:game_name>/lobby/list/', views.games_lobby, name='games_lobby'),
 ]
