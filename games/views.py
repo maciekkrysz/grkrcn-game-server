@@ -23,15 +23,9 @@ def games(request):
     return JsonResponse(data, safe=False)
 
 
-<<<<<<< HEAD
 def game_lobby(request, game_name):
     games = redis_list_from_dict('games', f'.{game_name}')
     # games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
-=======
-def games_lobby(request, game_name):
-    games = redis_list_from_dict('available_games', f'.{game_name}')
-    games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
->>>>>>> 2a2128e5dfa0e2024c8b104664601bf28588518b
     games_to_send = []
     for game in games:
         k, v = game.popitem()
