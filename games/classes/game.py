@@ -130,19 +130,24 @@ class Game(ABC):
     def game_info(cls, game_id):
         game = cls.path_to_game(game_id)
         info = {}
+        info['players'] = []
         players = redis.jsonget('games', f'.{game}.players')
         print(players)
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
+        info['max_players'] = max_players
         for p, values in players.items():
-            info[p] = {}
-            info[p]['nickname'] = values['nickname']
-            info[p]['ranking'] = values['ranking']
-            info[p]['ready'] = values['ready']
-            info[p]['active'] = values['active']
+            player = {}
+            player['position'] = p
+            player['nickname'] = values['nickname']
+            player['ranking'] = values['ranking']
+            player['ready'] = values['ready']
+            player['active'] = values['active']
+            info['players'].append(player)
         for i in range(len(info), max_players):
-            info['p' + str(i+1)] = None
+            info['players']['p' + str(i+1)] = None
         info['status'] = redis.jsonget('games', f'.{game}.status')
+        print(info)
         return info
 
     @classmethod
@@ -199,7 +204,7 @@ class Game(ABC):
     @classmethod
     def game_state(cls, game_id):
         game = cls.path_to_game(game_id)
-        players = {}
+        players = []
         for player, values in redis.jsonget('games', f'.{game}.players').items():
             player_info = {}
             player_info['cards_hand'] = redis.jsonarrlen(
@@ -208,7 +213,8 @@ class Game(ABC):
                 'games', f'.{game}.players.{player}.time')
             player_info['points'] = redis.jsonget(
                 'games', f'.{game}.players.{player}.points')
-            players[player] = player_info
+            player_info['position'] = player
+            players.append(player_info)
 
         stack_draw = redis.jsonarrlen('games', f'.{game}.stack_draw')
         stack_throw = redis.jsonarrlen('games', f'.{game}.stack_throw')

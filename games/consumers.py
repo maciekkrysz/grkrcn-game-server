@@ -92,7 +92,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def games_info_message(self, event):
         info = game_info(self.type_game, self.room_name)
         await self.send(text_data=json.dumps({
-            'info': info,
+            'data': info,
             'type': 'games_info'
         }))
 
