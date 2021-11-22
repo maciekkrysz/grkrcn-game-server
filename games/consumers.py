@@ -1,7 +1,7 @@
 import json
 from typing import final
 from channels.generic.websocket import AsyncWebsocketConsumer
-from .classes.games_handler import connect_to_game, debug_info, is_game_finished, make_move, possible_moves, \
+from .classes.games_handler import connect_to_game, current_username, debug_info, get_all_players, is_game_finished, make_move, possible_moves, \
     current_hand, current_state, game_info, game_self_info, mark_ready, start_game_possible, \
     start_game, disconnect_from_game
 
@@ -19,7 +19,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         self.type_game = self.scope['url_route']['kwargs']['type_game']
         self.room_name = self.scope['url_route']['kwargs']['room_id']
-        self.room_group_name = f'game_{self.type_game}_{self.room_name}'
+        self.room_group_name = f'__game_{self.type_game}_{self.room_name}'
 
         # Join room group
         await self.channel_layer.group_add(
@@ -44,7 +44,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.room_group_name, {
                 'type': 'games_info_message'
             }
-        )       
+        )
 
     async def disconnect(self, close_code):
         disconnect_from_game(
@@ -118,6 +118,16 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {'type': 'current_state_message'}
             )
+            for player in get_all_players(self.type_game, self.room_name):
+                await self.channel_layer.group_send(
+                    player,
+                    {'type': 'current_hand_message'}
+                )
+            current_username(self.type_game, self.room_name)
+            await self.channel_layer.group_send(
+                current_username(self.type_game, self.room_name),
+                {'type': 'possible_moves_message'}
+            )
 
     async def current_hand_message(self, event):
         hand = current_hand(self.type_game, self.room_name,
@@ -154,11 +164,20 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {'type': 'current_state_message'}
             )
+            for player in get_all_players(self.type_game, self.room_name):
+                await self.channel_layer.group_send(
+                    player,
+                    {'type': 'current_hand_message'}
+                )
             if is_game_finished(self.type_game, self.room_name):
                 await self.channel_layer.group_send(
                     self.room_group_name,
                     {'type': 'end_game_message'}
                 )
+            await self.channel_layer.group_send(
+                current_username(self.type_game, self.room_name),
+                {'type': 'possible_moves_message'}
+            )
         else:
             await self.send(text_data='Incorrect')
 

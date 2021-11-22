@@ -58,6 +58,11 @@ def game_info(game_type, game_id):
     return game_class.game_info(game_id)
 
 
+def get_all_players(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.get_all_players(game_id)
+
+
 def current_state(game_type, game_id):
     game_class = get_class(game_type)
     if game_class.is_game_active(game_id):
@@ -67,6 +72,11 @@ def current_state(game_type, game_id):
 def current_hand(game_type, game_id, user):
     game_class = get_class(game_type)
     return game_class.get_hand(game_id, user)
+
+
+def current_username(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.current_username(game_id)
 
 
 def possible_moves(game_type, game_id, user):

@@ -121,9 +121,6 @@ class Game(ABC):
     def mark_ready(cls, game_id, user, value: bool):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
-        print('marking')
-        print(chair)
-        print(redis.jsonget('games', f'.{game}.players'))
         redis.jsonset('games', f'.{game}.players.{chair}.ready', value)
 
     @classmethod
@@ -132,7 +129,7 @@ class Game(ABC):
         info = {}
         info['players'] = []
         players = redis.jsonget('games', f'.{game}.players')
-        print(players)
+        
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
         info['max_players'] = max_players
@@ -151,10 +148,26 @@ class Game(ABC):
         return info
 
     @classmethod
+    def get_all_players(cls, game_id):
+        game = cls.path_to_game(game_id)
+        nicknames = []
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            nicknames.append(values['nickname'])
+        return nicknames
+
+    @classmethod
     def get_hand(cls, game_id, user):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
         return redis.jsonget('games', f'.{game}.players.{chair}.hand')
+
+    @classmethod
+    def current_username(cls, game_id):
+        game = cls.path_to_game(game_id)
+        current_player = cls.current_player(game_id)
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            if p == current_player:
+                return values['nickname']
 
     @classmethod
     def current_player(cls, game_id):
@@ -169,8 +182,7 @@ class Game(ABC):
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
         players = len(redis.jsonget('games', f'.{game}.players'))
-        print('max', 'players')
-        print(max_players, players)
+
         if max_players == players:
             for values in redis.jsonget('games', f'.{game}.players').values():
                 if values['ready'] == False:

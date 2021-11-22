@@ -39,6 +39,7 @@ class War(Game):
             redis.jsonset('games', f'.{game}.players.{player}.last_action',
                           'take')
         redis.jsonset('games', f'.{game}.war_event', False)
+        redis.jsonset('games', f'.{game}.war_event_next_move', False)
 
     @classmethod
     def possible_moves(cls, game_id, user):
@@ -101,7 +102,7 @@ class War(Game):
                             return True
 
                         redis.jsonnumincrby(
-                            'games', f'.{game}.players.{p_win}', len(stack_throw))
+                            'games', f'.{game}.players.{p_win}.points', len(stack_throw))
                         redis.jsonset('games', f'.{game}.stack_throw', [])
                     else:
                         redis.jsonset(

@@ -32,9 +32,8 @@ def game_lobby(request, game_name):
         v['game_id'] = k
         games_to_send.append(v)
     return JsonResponse({'lobbies': games_to_send})
-    pass
 
-def game_lobby(request, game_name, game_id):
+def single_game_lobby(request, game_name, game_id):
     pass
 
 def game_info(request, game_name):
