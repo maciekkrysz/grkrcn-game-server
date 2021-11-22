@@ -215,19 +215,33 @@ def attrs(request):
     #         'SAMLResponse': saml_response
     #     }
     print(req['post_data'])
+
     print(1)
     saml_settings = OneLogin_Saml2_Settings(
         settings=None, custom_base_path=settings.SAML_FOLDER)
 
     auth2 = OneLogin_Saml2_Auth(req, old_settings=saml_settings)
-    print(auth2.get_session_index())
-    print(req['post_data']['SAMLResponse'])
+    # print(auth2.get_session_index())
+    # print(req['post_data']['SAMLResponse'])
 
     request_id = None
     if 'AuthNRequestID' in request.session:
         request_id = request.session['AuthNRequestID']
-
+    print(2)
+    print(request.__dict__.keys())
+    # print(request.__dict__)
+    # for el in request.__dict__.items():
+    #     print(el)
+    #     print()
+    print(request.session.__dict__)
+    print('keys============')
+    print(request.GET.keys())
+    # request_id = request.GET['SAMLResponse']
+    print(request.session.keys())
+    print(request_id)
     auth.process_response(request_id=request_id) 
+    print('---')
+    print(auth.get_session_index())
     print(auth.get_attributes())
     print('\n\n\n')
     # print(request.POST)
