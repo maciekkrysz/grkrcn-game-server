@@ -49,11 +49,11 @@ class War(Game):
                                     f'.{game}.players.{player}.last_action')
         if last_action == 'take':
             return {
-                'possible_actions': 'throw',
+                'possible_actions': ['throw'],
                 'possible_moves': cls.get_hand(game_id, user),
             }
         elif last_action == 'throw':
-            return {'possible_actions': 'take', 'possible_moves': []}
+            return {'possible_actions': ['take'], 'possible_moves': []}
 
     @classmethod
     def make_move(cls, game_id, user, action, move=None):
