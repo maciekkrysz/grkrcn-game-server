@@ -18,15 +18,13 @@ def redis_list_from_dict(object_name, path_to_dict):
     except:
         return []
 
-def redis_game_info(object_name, path_to_dict, game_id):
-    game = redis.jsonget(object_name, path_to_dict + f'.{game_id}')
+def redis_game_info(object_name, type_game, game_id):
+    game = redis.jsonget(object_name, f'.{type_game}.{game_id}')
     game_info = {}
     game_info['parameters'] = game['game_parameters']
     game_info['game_id'] = game_id
-    # game_info['max_players'] = params['max_players']
-    # game_info['time_per_player'] = params['time_per_player']
-    # game_info['is_ranked'] = params['is_ranked']
-    # game_info['cards_on_hand'] = params['cards_on_hand']
+    game_info['game_type'] = type_game
+    game_info['status'] = game['status']
     players = []
     for p, value in game['players'].items():
         players.append(value['nickname'])

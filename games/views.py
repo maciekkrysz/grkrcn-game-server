@@ -29,13 +29,13 @@ def game_lobbies(request, game_name):
     games_to_send = []
     for game in games:
         id, _ = game.popitem()
-        game_info = redis_game_info('games', f'.{game_name}', id)
+        game_info = redis_game_info('games', game_name, id)
         games_to_send.append(game_info)
     return JsonResponse({'lobbies': games_to_send})
 
 
 def lobby_info(request, game_name, game_id):
-    info = redis_game_info('games', f'.{game_name}', game_id)
+    info = redis_game_info('games', game_name, game_id)
     return JsonResponse({'data': info})
 
 
