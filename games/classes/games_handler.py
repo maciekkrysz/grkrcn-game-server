@@ -94,9 +94,29 @@ def make_move(game_type, game_id, user, action, move):
     return game_class.make_move(game_id, user, action, move)
 
 
+def is_game_ongoing(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.is_game_ongoing(game_id)
+
+
 def is_game_finished(game_type, game_id):
     game_class = get_class(game_type)
     return game_class.is_game_finished(game_id)
+
+
+def surrend(game_type, game_id, user):
+    game_class = get_class(game_type)
+    game_class.surrend(game_id, user)
+
+
+def get_finish_score(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.get_finish_scores(game_id)
+
+
+def set_status_waiting(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.set_status_waiting(game_id)
 
 
 def debug_info(game_type, game_id):

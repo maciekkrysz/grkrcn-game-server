@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import secrets
 import json
 import random
+
 from .cards_utils import get_cards_deck, get_random_hand
 from ..redis_utils import redis
 
@@ -41,6 +42,9 @@ class Game(ABC):
 
         # Add game to games
         redis.jsonset('games', f'.{type_game}.{id}', user_json)
+
+        redis.jsonset('games', f'.{type_game}.{id}.scores', {
+                      'win': [], 'lose': []})
         return id
 
     @classmethod
@@ -100,6 +104,7 @@ class Game(ABC):
         if user['nickname'] in cls.get_all_players(game_id):
             chair = cls.get_user_chair(game_id, user['nickname'])
             redis.jsonset('games', f'.{game}.players.{chair}.active', True)
+            redis.jsonset('games', f'.{game}.players.{chair}.inactive_pings', 0)
             return True
         elif redis.jsonget('games', f'.{game}.status') == WAITING and max_players > len(players):
             if cls.get_user_chair(game_id, user):
@@ -133,6 +138,8 @@ class Game(ABC):
         chair = cls.get_user_chair(game_id, user)
         if isinstance(value, bool):
             redis.jsonset('games', f'.{game}.players.{chair}.active', value)
+            if value:
+                redis.jsonset('games', f'.{game}.players.{chair}.inactive_pings', 0)
 
     @classmethod
     def game_info(cls, game_id):
@@ -183,12 +190,14 @@ class Game(ABC):
     @classmethod
     def current_player(cls, game_id):
         game = cls.path_to_game(game_id)
-        return redis.jsonget('games', f'.{game}.current_player')
+        if redis.jsonget('games', f'.{game}.status') == ONGOING:
+            return redis.jsonget('games', f'.{game}.current_player')
 
     @classmethod
     def start_game_possible(cls, game_id):
         game = cls.path_to_game(game_id)
-        if redis.jsonget('games', f'.{game}.status') != WAITING:
+        if redis.jsonget('games', f'.{game}.status') != WAITING \
+                and redis.jsonget('games', f'.{game}.status') != ONGOING:
             return False
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
@@ -284,7 +293,38 @@ class Game(ABC):
             if cls.get_user_chair(game_id, user):
                 return True
         return False
-        
+
+    @classmethod
+    def is_game_ongoing(cls, game_id):
+        game = cls.path_to_game(game_id)
+        return redis.jsonget('games', f'.{game}.status') == ONGOING
+
+    @classmethod
+    def surrend(cls, game_id, user):
+        game = cls.path_to_game(game_id)
+        cls.finish_game(game_id, user)
+
+    @classmethod
+    def finish_game(cls, game_id, lose_user):
+        game = cls.path_to_game(game_id)
+        players = cls.get_all_players(game_id)
+        players.remove(lose_user)
+
+        redis.jsonarrappend('games', f'.{game}.scores.lose', lose_user)
+        for p in players:
+            redis.jsonarrappend('games', f'.{game}.scores.win', p)
+        redis.jsonset('games', f'.{game}.status', FINISHED)
+
+    @classmethod
+    def get_finish_scores(cls, game_id):
+        game = cls.path_to_game(game_id)
+        return redis.jsonget('games', f'.{game}.scores')
+
+    @classmethod
+    def set_status_waiting(cls, game_id):
+        game = cls.path_to_game(game_id)
+        redis.jsonset('games', f'.{game}.status', WAITING)
+
     @classmethod
     @abstractmethod
     def is_game_finished(cls, game_id):

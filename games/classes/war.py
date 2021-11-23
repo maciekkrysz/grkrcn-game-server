@@ -99,7 +99,8 @@ class War(Game):
                         else:
                             redis.jsonset(
                                 'games', f'.{game}.war_event_next_move', True)
-                            redis.jsonset('games', f'.{game}.players.{player}.last_action', action)
+                            redis.jsonset(
+                                'games', f'.{game}.players.{player}.last_action', action)
                             return True
 
                         redis.jsonnumincrby(
@@ -108,7 +109,6 @@ class War(Game):
                     else:
                         redis.jsonset(
                             'games', f'.{game}.war_event_next_move', False)
-
         else:
             return False
 
@@ -126,6 +126,8 @@ class War(Game):
     @classmethod
     def is_game_finished(cls, game_id):
         game = cls.path_to_game(game_id)
+        if redis.jsonget('games', f'.{game}.status') == FINISHED:
+            return True
         for player, values in redis.jsonget('games',
                                             f'.{game}.players').items():
             if len(values['hand']) != 0:
