@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponseNotFound, HttpResponseBadReque
 from .classes.games_handler import create_game
 from .models import GameType
 from .resources import normalize_str
-from .redis_utils import redis, redis_list_from_dict
+from .redis_utils import redis, redis_list_from_dict, redis_game_info
 import json
 from django.views.decorators.csrf import ensure_csrf_cookie
 # Create your views here.
@@ -23,18 +23,21 @@ def games(request):
     return JsonResponse(data, safe=False)
 
 
-def game_lobby(request, game_name):
+def game_lobbies(request, game_name):
     games = redis_list_from_dict('games', f'.{game_name}')
     # games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
     games_to_send = []
     for game in games:
-        k, v = game.popitem()
-        v['game_id'] = k
-        games_to_send.append(v)
+        id, _ = game.popitem()
+        game_info = redis_game_info('games', f'.{game_name}', id)
+        games_to_send.append(game_info)
     return JsonResponse({'lobbies': games_to_send})
 
-def single_game_lobby(request, game_name, game_id):
-    pass
+
+def lobby_info(request, game_name, game_id):
+    info = redis_game_info('games', f'.{game_name}', game_id)
+    return JsonResponse({'data': info})
+
 
 def game_info(request, game_name):
     for typegame in list(GameType.objects.all().values('type_name', 'description')):
