@@ -154,9 +154,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             mark_active(self.type_game, self.room_name,
                         self.user['nickname'], event['value'])
             if not event['value']:
-                self.channel_layer.group_send(
-                    self.user['nickname'],
-                    {'type': 'keep_alive'})
+                await self.send(text_data=json.dumps({'type': 'keep_alive'}))
+            await self.send_update()
         except:
             await self.channel_layer.group_send(
                 self.user['nickname'],
@@ -283,11 +282,11 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def send_update(self):
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {'type': 'current_state_message'}
-        )
         if is_game_ongoing(self.type_game, self.room_name):
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {'type': 'current_state_message'}
+            )
             for player in get_all_players(self.type_game, self.room_name):
                 await self.channel_layer.group_send(
                     player,
@@ -296,6 +295,12 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 current_username(self.type_game, self.room_name),
                 {'type': 'possible_moves_message'}
+            )
+        else:
+            await self.channel_layer.group_send(
+                self.room_group_name, {
+                    'type': 'games_info_message'
+                }
             )
 
     def get_user_by_saml(self):
