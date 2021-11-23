@@ -35,6 +35,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.type_game = self.scope['url_route']['kwargs']['type_game']
         self.room_name = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f'__game_{self.type_game}_{self.room_name}'
+        self.user_group = self.room_name + self.user['nickname']
 
         # Join room group
         await self.channel_layer.group_add(
@@ -43,14 +44,14 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
         # Join personal group
         await self.channel_layer.group_add(
-            self.user['nickname'],
+            self.user_group,
             self.channel_name
         )
         if connect_to_game(self.type_game, self.room_name, self.user):
             await self.accept()
 
         await self.channel_layer.group_send(
-            self.user['nickname'], {
+            self.user_group, {
                 'type': 'games_self_info_message'
             }
         )
@@ -73,7 +74,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
         await self.channel_layer.group_discard(
-            self.user['nickname'],
+            self.user_group,
             self.channel_name
         )
 
@@ -95,7 +96,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         if text_data_json['type'] not in MESSAGES:
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 {'type': 'error_message', 'message': 'Incorrect command'}
             )
             return
@@ -111,7 +112,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             print(text_data_json)
             print(self.user['nickname'])
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 text_data_json
             )
         print(debug_info(self.type_game, self.room_name))
@@ -145,7 +146,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
         except:
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 {'type': 'error_message', 'message': 'Cannot set ready'}
             )
 
@@ -158,7 +159,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.send_update()
         except:
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 {'type': 'error_message', 'message': 'Cannot set active'})
 
     async def current_hand_message(self, event):
@@ -204,7 +205,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 {'type': 'error_message', 'message': 'Error in move'}
             )
 
@@ -216,7 +217,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
             else:
                 await self.channel_layer.group_send(
-                    self.user['nickname'],
+                    self.user_group,
                     {'type': 'error_message', 'message': 'Error in message'}
                 )
             if is_game_finished(self.type_game, self.room_name):
@@ -227,7 +228,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 {'type': 'error_message', 'message': 'Error in move'}
             )
 
@@ -242,11 +243,20 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def rematch_message(self, event):
         if is_game_finished(self.type_game, self.room_name):
             set_status_waiting(self.type_game, self.room_name)
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {'type': 'clear_table_message'}
+            )
         else:
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 {'type': 'error_message', 'message': 'Rematch not available'}
             )
+
+    async def clear_table_message(self, event):
+        await self.send(text_data=json.dumps({
+            'type': 'game_reset'
+        }))
 
     # Receive message from room group
     async def chat_message(self, event):
@@ -263,7 +273,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             }))
         except:
             await self.channel_layer.group_send(
-                self.user['nickname'],
+                self.user_group,
                 {'type': 'error_message', 'message': 'Error in message'}
             )
 
@@ -308,6 +318,5 @@ class GameConsumer(AsyncWebsocketConsumer):
         import secrets
         self.user = {}
         self.user['nickname'] = 'user_' + str(secrets.randbelow(4) + 1)
-        # self.user['nickname'] = 'user_' + '4'
         self.user['ranking'] = 1000
         print(f'connected user: {self.user}')
