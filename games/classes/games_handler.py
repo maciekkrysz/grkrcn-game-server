@@ -119,6 +119,11 @@ def set_status_waiting(game_type, game_id):
     return game_class.set_status_waiting(game_id)
 
 
+def add_inactive_ping(game_type, game_id, user):
+    game_class = get_class(game_type)
+    game_class.add_inactive_ping(game_id)
+
+
 def debug_info(game_type, game_id):
     game_class = get_class(game_type)
     game_class.debug_info(game_id)

@@ -104,7 +104,8 @@ class Game(ABC):
         if user['nickname'] in cls.get_all_players(game_id):
             chair = cls.get_user_chair(game_id, user['nickname'])
             redis.jsonset('games', f'.{game}.players.{chair}.active', True)
-            redis.jsonset('games', f'.{game}.players.{chair}.inactive_pings', 0)
+            redis.jsonset(
+                'games', f'.{game}.players.{chair}.inactive_pings', 0)
             return True
         elif redis.jsonget('games', f'.{game}.status') == WAITING and max_players > len(players):
             if cls.get_user_chair(game_id, user):
@@ -139,7 +140,16 @@ class Game(ABC):
         if isinstance(value, bool):
             redis.jsonset('games', f'.{game}.players.{chair}.active', value)
             if value:
-                redis.jsonset('games', f'.{game}.players.{chair}.inactive_pings', 0)
+                redis.jsonset(
+                    'games', f'.{game}.players.{chair}.inactive_pings', 0)
+            else:
+                cls.add_inactive_ping(game_id, chair)
+
+    @classmethod
+    def add_inactive_ping(cls, game_id, chair):
+        game = cls.path_to_game(game_id)
+        redis.jsonnumincrby(
+            'games', f'.{game}.players.{chair}.inactive_pings', 1)
 
     @classmethod
     def game_info(cls, game_id):
