@@ -6,9 +6,20 @@ from .classes.games_handler import connect_to_game, current_username, debug_info
     start_game, disconnect_from_game
 
 
+import asyncio
 PUBLIC_MESSAGES = {
     'current_state_message',
     'games_info_message',
+    'chat_message',
+    'active_message',
+}
+
+MESSAGES = PUBLIC_MESSAGES | {
+    'ready_message',
+    'games_self_info_message',
+    'current_hand_message',
+    'possible_moves_message',
+    'make_move_message',
 }
 
 
@@ -76,6 +87,14 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         text_data_json['type'] += '_message'
+
+        if text_data_json['type'] not in MESSAGES:
+            await self.channel_layer.group_send(
+                self.user['nickname'],
+                {'type': 'error_message', 'message': 'Incorrect command'}
+            )
+            return
+
         if text_data_json['type'] in PUBLIC_MESSAGES:
             # Send message to room group
             await self.channel_layer.group_send(
@@ -106,27 +125,33 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def ready_message(self, event):
-        mark_ready(self.type_game, self.room_name,
-                   self.user['nickname'], event['value'])
-        await self.channel_layer.group_send(
-            self.room_group_name,
-            {'type': 'games_info_message'}
-        )
-        if start_game_possible(self.type_game, self.room_name):
-            start_game(self.type_game, self.room_name)
+        try:
+            mark_ready(self.type_game, self.room_name,
+                       self.user['nickname'], event['value'])
             await self.channel_layer.group_send(
                 self.room_group_name,
-                {'type': 'current_state_message'}
+                {'type': 'games_info_message'}
             )
-            for player in get_all_players(self.type_game, self.room_name):
+            if start_game_possible(self.type_game, self.room_name):
+                start_game(self.type_game, self.room_name)
                 await self.channel_layer.group_send(
-                    player,
-                    {'type': 'current_hand_message'}
+                    self.room_group_name,
+                    {'type': 'current_state_message'}
                 )
-            current_username(self.type_game, self.room_name)
+                for player in get_all_players(self.type_game, self.room_name):
+                    await self.channel_layer.group_send(
+                        player,
+                        {'type': 'current_hand_message'}
+                    )
+                current_username(self.type_game, self.room_name)
+                await self.channel_layer.group_send(
+                    current_username(self.type_game, self.room_name),
+                    {'type': 'possible_moves_message'}
+                )
+        except:
             await self.channel_layer.group_send(
-                current_username(self.type_game, self.room_name),
-                {'type': 'possible_moves_message'}
+                self.user['nickname'],
+                {'type': 'error_message', 'message': 'cannot set ready'}
             )
 
     async def current_hand_message(self, event):
@@ -153,50 +178,76 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def make_move_message(self, event):
-        action = event['action']
         if 'move' in event:
             move = event['move']
         else:
             move = None
-        if make_move(self.type_game, self.room_name, self.user['nickname'], action, move):
-            await self.send(text_data='Correct')
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {'type': 'current_state_message'}
-            )
-            for player in get_all_players(self.type_game, self.room_name):
-                await self.channel_layer.group_send(
-                    player,
-                    {'type': 'current_hand_message'}
-                )
-            if is_game_finished(self.type_game, self.room_name):
+        try:
+            action = event['action']
+            if make_move(self.type_game, self.room_name, self.user['nickname'], action, move):
+                await self.send(text_data='Correct')
                 await self.channel_layer.group_send(
                     self.room_group_name,
-                    {'type': 'end_game_message'}
+                    {'type': 'current_state_message'}
                 )
+                for player in get_all_players(self.type_game, self.room_name):
+                    await self.channel_layer.group_send(
+                        player,
+                        {'type': 'current_hand_message'}
+                    )
+                if is_game_finished(self.type_game, self.room_name):
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {'type': 'end_game_message'}
+                    )
+                await self.channel_layer.group_send(
+                    current_username(self.type_game, self.room_name),
+                    {'type': 'possible_moves_message'}
+                )
+            else:
+                await self.send(text_data='Incorrect')
+        except Exception as err:
+            print(f"Unexpected {err=}, {type(err)=}")
             await self.channel_layer.group_send(
-                current_username(self.type_game, self.room_name),
-                {'type': 'possible_moves_message'}
+                self.user['nickname'],
+                {'type': 'error_message', 'message': 'Error in move'}
             )
-        else:
-            await self.send(text_data='Incorrect')
 
     async def end_game_message(self, event):
         pass
 
     # Receive message from room group
     async def chat_message(self, event):
-        message = event['message']
+        try:
+            message = event['message']
 
-        # Send message to WebSocket
-        await self.send(text_data=json.dumps({
-            'message': message
-        }))
+            # Send message to WebSocket
+            await self.send(text_data=json.dumps({
+                'data': {
+                    'nickname': self.user['nickname'],
+                    'message': message,
+                },
+                'type': 'chat',
+            }))
+        except:
+            await self.channel_layer.group_send(
+                self.user['nickname'],
+                {'type': 'error_message', 'message': 'Error in message'}
+            )
 
     async def test_message(self, event):
         # info = start_game(self.type_game, self.room_name)
         # print(is_game_finished(self.type_game, self.room_name))
         pass
+
+    async def error_message(self, event):
+        message = event['message']
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'message': message,
+            'type': 'error'
+        }))
 
     def get_user_by_saml(self):
         # TODO verify user by saml

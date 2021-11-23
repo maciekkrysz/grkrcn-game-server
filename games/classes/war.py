@@ -1,4 +1,4 @@
-from .game import Game
+from .game import Game, FINISHED
 from ..redis_utils import redis
 from .cards_utils import get_random_card, get_random_hand, cards_prefix
 import json
@@ -99,6 +99,7 @@ class War(Game):
                         else:
                             redis.jsonset(
                                 'games', f'.{game}.war_event_next_move', True)
+                            redis.jsonset('games', f'.{game}.players.{player}.last_action', action)
                             return True
 
                         redis.jsonnumincrby(
@@ -129,6 +130,7 @@ class War(Game):
                                             f'.{game}.players').items():
             if len(values['hand']) != 0:
                 return False
+        redis.jsonset('games', f'.{game}.status', FINISHED)
         return True
 
     @classmethod

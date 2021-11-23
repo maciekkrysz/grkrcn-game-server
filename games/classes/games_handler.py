@@ -43,6 +43,11 @@ def mark_ready(game_type, game_id, user, value):
     game_class.mark_ready(game_id, user, value)
 
 
+def mark_active(game_type, game_id, user, value):
+    game_class = get_class(game_type)
+    game_class.mark_active(game_id, user, value)
+
+
 def start_game_possible(game_type, game_id):
     game_class = get_class(game_type)
     return game_class.start_game_possible(game_id)

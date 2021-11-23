@@ -8,6 +8,7 @@ from ..redis_utils import redis
 HASH_GAME_LEN = 4
 WAITING = 'waiting'
 ONGOING = 'ongoing'
+FINISHED = 'finished'
 
 
 class Game(ABC):
@@ -96,16 +97,18 @@ class Game(ABC):
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
         players = redis.jsonget('games', f'.{game}.players')
-
-        if redis.jsonget('games', f'.{game}.status') == WAITING and max_players > len(players):
+        if user['nickname'] in cls.get_all_players(game_id):
+            chair = cls.get_user_chair(game_id, user['nickname'])
+            redis.jsonset('games', f'.{game}.players.{chair}.active', True)
+            return True
+        elif redis.jsonget('games', f'.{game}.status') == WAITING and max_players > len(players):
+            if cls.get_user_chair(game_id, user):
+                return True
+            # if cls.is_user_in_any_game(user['nickname']):
+            #     return False
             chair = cls.get_first_possible_chair(game_id)
             redis.jsonset('games', f'.{game}.players.{chair}', user)
             return True
-        elif redis.jsonget('games', f'.{game}.status') == ONGOING:
-            chair = cls.get_user_chair(game_id, user['nickname'])
-            if chair:
-                redis.jsonset('games', f'.{game}.players.{chair}.active', True)
-                return True
         return False
 
     @classmethod
@@ -121,7 +124,15 @@ class Game(ABC):
     def mark_ready(cls, game_id, user, value: bool):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
-        redis.jsonset('games', f'.{game}.players.{chair}.ready', value)
+        if isinstance(value, bool):
+            redis.jsonset('games', f'.{game}.players.{chair}.ready', value)
+
+    @classmethod
+    def mark_active(cls, game_id, user, value: bool):
+        game = cls.path_to_game(game_id)
+        chair = cls.get_user_chair(game_id, user)
+        if isinstance(value, bool):
+            redis.jsonset('games', f'.{game}.players.{chair}.active', value)
 
     @classmethod
     def game_info(cls, game_id):
@@ -129,7 +140,7 @@ class Game(ABC):
         info = {}
         info['players'] = []
         players = redis.jsonget('games', f'.{game}.players')
-        
+
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
         info['max_players'] = max_players
@@ -267,6 +278,13 @@ class Game(ABC):
                 return return_player
             return_player = p
 
+    @classmethod
+    def is_user_in_any_game(cls, user):
+        for game_id in redis.jsonget('games', f'.{cls.__name__.lower()}'):
+            if cls.get_user_chair(game_id, user):
+                return True
+        return False
+        
     @classmethod
     @abstractmethod
     def is_game_finished(cls, game_id):
