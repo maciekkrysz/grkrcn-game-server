@@ -193,10 +193,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         try:
             action = event['action']
             if make_move(self.type_game, self.room_name, self.user['nickname'], action, move):
-                await self.send(text_data='Correct')
                 await self.send_update()
-            else:
-                await self.send(text_data='Incorrect')
+
             if is_game_finished(self.type_game, self.room_name):
                 await self.channel_layer.group_send(
                     self.room_group_name,
