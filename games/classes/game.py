@@ -74,8 +74,8 @@ class Game(ABC):
             def get_seconds(time):
                 multipier = 1
                 seconds = 0
-                for el in time.split(':'):
-                    seconds += int(el)
+                for el in time.split(':')[::-1]:
+                    seconds += int(el) * multipier
                     multipier *= 60
                 return seconds
             if get_seconds(config_param['min']) < user_value < get_seconds(config_param['max']):
