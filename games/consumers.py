@@ -299,11 +299,11 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
             for player in get_all_players(self.type_game, self.room_name):
                 await self.channel_layer.group_send(
-                    player,
+                    self.room_name + player,
                     {'type': 'current_hand_message'}
                 )
             await self.channel_layer.group_send(
-                current_username(self.type_game, self.room_name),
+                self.room_name + current_username(self.type_game, self.room_name),
                 {'type': 'possible_moves_message'}
             )
         else:
