@@ -247,6 +247,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {'type': 'clear_table_message'}
             )
+            await self.send_update()
         else:
             await self.channel_layer.group_send(
                 self.user_group,
