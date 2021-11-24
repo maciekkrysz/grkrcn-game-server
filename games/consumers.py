@@ -1,6 +1,7 @@
 import json
 from logging import error
 from typing import final
+import pika
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .classes.games_handler import connect_to_game, current_username, debug_info, get_all_players, \
     is_game_finished, make_move, mark_active, possible_moves, current_hand, current_state, game_info, \
@@ -320,3 +321,15 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.user['nickname'] = 'user_' + str(secrets.randbelow(4) + 1)
         self.user['ranking'] = 1000
         print(f'connected user: {self.user}')
+        self.send_message_to_rabbit()
+
+    def send_message_to_rabbit(self, queue='hello', key='key', message='hejka'):
+        connection = pika.BlockingConnection(
+            pika.ConnectionParameters(host='localhost'))
+        channel = connection.channel()
+
+        channel.queue_declare(queue=queue)
+
+        channel.basic_publish(exchange='', routing_key=key, body=message)
+        print(" [x] Sent 'Hello World!'")
+        connection.close()
