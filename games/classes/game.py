@@ -71,7 +71,15 @@ class Game(ABC):
             user_value = bool(user_value)
             return True
         elif param_type == 'time':
-            return True
+            def get_seconds(time):
+                multipier = 1
+                seconds = 0
+                for el in time.split(':'):
+                    seconds += int(el)
+                    multipier *= 60
+                return seconds
+            if get_seconds(config_param['min']) < user_value < get_seconds(config_param['max']):
+                return True
         else:
             raise Exception('Parameter type has no implemented checking')
         raise Exception(f'{param_type} parameter is incorrect')
