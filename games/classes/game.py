@@ -240,9 +240,9 @@ class Game(ABC):
             card_deck, cards = get_random_hand(card_deck, redis.jsonget(
                 'games', f'.{game}.game_parameters.cards_on_hand'))
             redis.jsonset('games', f'.{game}.players.{player}.hand', cards)
-            time = redis.jsonget(
+            u_time = redis.jsonget(
                 'games', f'.{game}.game_parameters.time_per_player')
-            redis.jsonset('games', f'.{game}.players.{player}.time', time)
+            redis.jsonset('games', f'.{game}.players.{player}.time', u_time)
             redis.jsonset('games', f'.{game}.players.{player}.points', 0)
 
         starting_player = random.choice(
@@ -291,11 +291,6 @@ class Game(ABC):
     def debug_info(cls, game_id):
         game = cls.path_to_game(game_id)
         print(redis.jsonget('games', f'.{game}'))
-
-    @classmethod
-    def is_game_active(cls, game_id):
-        game = cls.path_to_game(game_id)
-        return redis.jsonget('games', f'.{game}.status') == ONGOING
 
     @classmethod
     def get_next_player(cls, game_id):
@@ -347,9 +342,19 @@ class Game(ABC):
         redis.jsonset('games', f'.{game}.status', WAITING)
 
     @classmethod
+    def update_user_time(cls, game_id, user=None):
+        """
+        if user==None -> update current_user
+        """
+        game = cls.path_to_game(game_id)
+        if user is not None:
+            time_before = redis.jsonget('games', f'.{game}.status')
+
+    @classmethod
     def make_move(cls, game_id, user, move):
         finish_time = time.time()
         game = cls.path_to_game(game_id)
+
         pass
 
     @classmethod

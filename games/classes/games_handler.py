@@ -70,7 +70,7 @@ def get_all_players(game_type, game_id):
 
 def current_state(game_type, game_id):
     game_class = get_class(game_type)
-    if game_class.is_game_active(game_id):
+    if game_class.is_game_ongoing(game_id):
         return game_class.game_state(game_id)
 
 

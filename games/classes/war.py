@@ -57,6 +57,7 @@ class War(Game):
 
     @classmethod
     def make_move(cls, game_id, user, action, move=None):
+        super().make_move(game_id, user, action, move)
         game = cls.path_to_game(game_id)
         player = cls.get_user_chair(game_id, user)
         poss_moves = cls.possible_moves(game_id, user)
