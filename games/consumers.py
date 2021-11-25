@@ -1,6 +1,4 @@
 import json
-from logging import error
-from typing import final
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .classes.games_handler import connect_to_game, current_username, debug_info, get_all_players, \
     is_game_finished, make_move, mark_active, possible_moves, current_hand, current_state, game_info, \
@@ -8,7 +6,6 @@ from .classes.games_handler import connect_to_game, current_username, debug_info
     is_game_ongoing, surrend, get_finish_score
 
 
-import asyncio
 PUBLIC_MESSAGES = {
     'current_state_message',
     'games_info_message',

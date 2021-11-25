@@ -12,7 +12,7 @@ HASH_GAME_LEN = 4
 WAITING = 'waiting'
 ONGOING = 'ongoing'
 FINISHED = 'finished'
-MAX_TIMEOUT = 30
+MAX_TIMEOUT = 10
 
 
 class Game(ABC):
@@ -81,7 +81,7 @@ class Game(ABC):
                     seconds += int(el) * multipier
                     multipier *= 60
                 return seconds
-            if get_seconds(config_param['min']) < user_value < get_seconds(config_param['max']):
+            if get_seconds(config_param['min']) <= user_value <= get_seconds(config_param['max']):
                 return True
         else:
             raise Exception('Parameter type has no implemented checking')
@@ -260,11 +260,12 @@ class Game(ABC):
         redis.jsonset('games', f'.{game}.stack_draw', card_deck)
         redis.jsonset('games', f'.{game}.stack_throw', [])
         redis.jsonset('games', f'.{game}.move_time', time.time())
+        redis.jsonset('games', f'.{game}.end_by_timeout', False)
 
     @classmethod
     def game_state(cls, game_id):
         game = cls.path_to_game(game_id)
-        cls.update_times(game_id)
+        cls.check_timers(game_id)
         players = []
         for player, values in redis.jsonget('games', f'.{game}.players').items():
             player_info = {}
@@ -337,12 +338,15 @@ class Game(ABC):
         redis.jsonarrappend('games', f'.{game}.scores.lose', lose_user)
         for p in players:
             redis.jsonarrappend('games', f'.{game}.scores.win', p)
+        print('USTAWIANIE FINISHED')
         redis.jsonset('games', f'.{game}.status', FINISHED)
 
     @classmethod
     def get_finish_scores(cls, game_id):
         game = cls.path_to_game(game_id)
-        return redis.jsonget('games', f'.{game}.scores')
+        scores = redis.jsonget('games', f'.{game}.scores')
+        end_by_timeout = redis.jsonget('games', f'.{game}.end_by_timeout')
+        return {'scores': scores, 'timeout': end_by_timeout}
 
     @classmethod
     def set_status_waiting(cls, game_id):
@@ -399,9 +403,43 @@ class Game(ABC):
                             f'.{game}.players.{user}.time', -time_delta)
 
     @classmethod
+    def get_undertime_user(cls, game_id):
+        game = cls.path_to_game(game_id)
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            if values['time'] <= 0:
+                return values['nickname']
+
+    @classmethod
+    def get_timeouted_user(cls, game_id):
+        game = cls.path_to_game(game_id)
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            if values['timeout'] <= 0:
+                return values['nickname']
+
+    @classmethod
+    def finish_game_by_undertime(cls, game_id):
+        if not cls.is_game_finished(game_id):
+            game = cls.path_to_game(game_id)
+            if cls.get_undertime_user(game_id) is not None:
+                user = cls.get_undertime_user(game_id)
+            elif cls.get_timeouted_user(game_id) is not None:
+                user = cls.get_timeouted_user(game_id)
+                redis.jsonset('games', f'.{game}.end_by_timeout', True)
+            else:
+                return
+            cls.finish_game(game_id, user)
+
+    @classmethod
+    def check_timers(cls, game_id):
+        cls.update_times(game_id)
+        if cls.get_undertime_user(game_id) is not None \
+                or cls.get_timeouted_user(game_id) is not None:
+            cls.finish_game_by_undertime(game_id)
+
+    @classmethod
     def make_move(cls, game_id, user, action, move):
         game = cls.path_to_game(game_id)
-        cls.update_times(game_id)
+        cls.check_timers(game_id)
 
     @classmethod
     @abstractmethod

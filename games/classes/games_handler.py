@@ -70,8 +70,11 @@ def get_all_players(game_type, game_id):
 
 def current_state(game_type, game_id):
     game_class = get_class(game_type)
+    game_class.check_timers(game_id)
     if game_class.is_game_ongoing(game_id):
         return game_class.game_state(game_id)
+    elif game_class.is_game_finished(game_id):
+        return game_class.get_finish_scores(game_id)
 
 
 def current_hand(game_type, game_id, user):
