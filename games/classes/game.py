@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import secrets
 import json
 import random
+import time
 
 from .cards_utils import get_cards_deck, get_random_hand
 from ..redis_utils import redis
@@ -129,9 +130,10 @@ class Game(ABC):
     def disconnect_from(cls, game_id, user):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
-        if redis.jsonget('games', f'.{game}.status') == WAITING:
+        status = redis.jsonget('games', f'.{game}.status')
+        if status == WAITING or status == FINISHED:
             redis.jsondel('games', f'.{game}.players.{chair}')
-        elif redis.jsonget('games', f'.{game}.status') == ONGOING:
+        elif status == ONGOING:
             redis.jsonset('games', f'.{game}.players.{chair}.active', False)
 
     @classmethod
@@ -250,6 +252,7 @@ class Game(ABC):
 
         redis.jsonset('games', f'.{game}.stack_draw', card_deck)
         redis.jsonset('games', f'.{game}.stack_throw', [])
+        redis.jsonset('games', f'.{game}.move_time', time.time())
 
     @classmethod
     def game_state(cls, game_id):
@@ -344,13 +347,14 @@ class Game(ABC):
         redis.jsonset('games', f'.{game}.status', WAITING)
 
     @classmethod
-    @abstractmethod
-    def is_game_finished(cls, game_id):
+    def make_move(cls, game_id, user, move):
+        finish_time = time.time()
+        game = cls.path_to_game(game_id)
         pass
 
     @classmethod
     @abstractmethod
-    def make_move(cls, game_id, user, move):
+    def is_game_finished(cls, game_id):
         pass
 
     @classmethod
