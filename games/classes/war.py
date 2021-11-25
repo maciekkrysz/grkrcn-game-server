@@ -107,6 +107,7 @@ class War(Game):
                         redis.jsonnumincrby(
                             'games', f'.{game}.players.{p_win}.points', len(stack_throw))
                         redis.jsonset('games', f'.{game}.stack_throw', [])
+                        redis.jsonset('games', f'.{game}.next_player', p_win)
                     else:
                         redis.jsonset(
                             'games', f'.{game}.war_event_next_move', False)
@@ -141,6 +142,16 @@ class War(Game):
         game = cls.path_to_game(game_id)
         war_event = redis.jsonget('games', f'.{game}.war_event')
         redis.jsonset('games', f'.{game}.war_event', not war_event)
+
+    @classmethod
+    def get_next_player(cls, game_id):
+        game = cls.path_to_game(game_id)
+        try:
+            next = redis.jsonget('games', f'.{game}.next_player')
+            redis.jsondel('games', f'.{game}.next_player')
+            return next
+        except:
+            return super().get_next_player(game_id)
 
     def compare_card(card1, card2):
         if card1[0] == card2[0]:
