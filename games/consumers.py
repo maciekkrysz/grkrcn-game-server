@@ -116,17 +116,18 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def ready_message(self, event):
+        
+        mark_ready(self.type_game, self.room_name,
+                    self.user['nickname'], event['value'])
+        await self.channel_layer.group_send(
+            self.room_group_name,
+            {'type': 'games_info_message'}
+        )
+        if start_game_possible(self.type_game, self.room_name):
+            start_game(self.type_game, self.room_name)
+            await self.send_update(force_game_info=False)
         try:
-            mark_ready(self.type_game, self.room_name,
-                       self.user['nickname'], event['value'])
-            await self.channel_layer.group_send(
-                self.room_group_name,
-                {'type': 'games_info_message'}
-            )
-            if start_game_possible(self.type_game, self.room_name):
-                start_game(self.type_game, self.room_name)
-                await self.send_update(force_game_info=False)
-
+            print(1)
         except:
             await self.channel_layer.group_send(
                 self.user_group,
