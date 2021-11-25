@@ -55,12 +55,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 'type': 'games_self_info_message'
             }
         )
-
-        await self.channel_layer.group_send(
-            self.room_group_name, {
-                'type': 'games_info_message'
-            }
-        )
         await self.send_update()
 
     async def disconnect(self, close_code):
@@ -77,17 +71,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             self.user_group,
             self.channel_name
         )
+        await self.send_update()
 
-        await self.channel_layer.group_send(
-            self.room_group_name, {
-                'type': 'current_state_message'
-            }
-        )
-        await self.channel_layer.group_send(
-            self.room_group_name, {
-                'type': 'games_info_message'
-            }
-        )
 
     # Receive message from WebSocket
     async def receive(self, text_data):
@@ -109,8 +94,6 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
         else:
             # Send reply to sender
-            print(text_data_json)
-            print(self.user['nickname'])
             await self.channel_layer.group_send(
                 self.user_group,
                 text_data_json
@@ -142,7 +125,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
             if start_game_possible(self.type_game, self.room_name):
                 start_game(self.type_game, self.room_name)
-                await self.send_update()
+                await self.send_update(force_game_info=False)
 
         except:
             await self.channel_layer.group_send(
@@ -193,7 +176,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         try:
             action = event['action']
             if make_move(self.type_game, self.room_name, self.user['nickname'], action, move):
-                await self.send_update()
+                await self.send_update(force_game_info=False)
 
             if is_game_finished(self.type_game, self.room_name):
                 await self.channel_layer.group_send(
@@ -290,7 +273,7 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'error'
         }))
 
-    async def send_update(self):
+    async def send_update(self, force_game_info=True):
         if is_game_ongoing(self.type_game, self.room_name):
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -305,7 +288,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_name + current_username(self.type_game, self.room_name),
                 {'type': 'possible_moves_message'}
             )
-        else:
+        if force_game_info:
             await self.channel_layer.group_send(
                 self.room_group_name, {
                     'type': 'games_info_message'
