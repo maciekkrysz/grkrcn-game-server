@@ -270,11 +270,11 @@ class Game(ABC):
             player_info = {}
             player_info['cards_hand'] = redis.jsonarrlen('games',
                                                          f'.{game}.players.{player}.hand')
+            player_info['time'] = math.ceil(redis.jsonget('games',
+                                                          f'.{game}.players.{player}.time'))
             player_info['points'] = redis.jsonget('games',
                                                   f'.{game}.players.{player}.points')
             player_info['position'] = player
-            player_info['time'] = math.ceil(redis.jsonget('games',
-                                                          f'.{game}.players.{player}.time'))
             players.append(player_info)
 
         stack_draw = redis.jsonarrlen('games', f'.{game}.stack_draw')
@@ -354,7 +354,8 @@ class Game(ABC):
     @classmethod
     def start_counting_timeout(cls, game_id, chair):
         game = cls.path_to_game(game_id)
-        redis.jsonset('games', f'.{game}.players.{chair}.timeout_start', time.time())
+        redis.jsonset('games',
+                      f'.{game}.players.{chair}.timeout_start', time.time())
 
     @classmethod
     def update_times(cls, game_id):
