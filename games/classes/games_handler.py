@@ -89,6 +89,11 @@ def possible_moves(game_type, game_id, user):
     return game_class.possible_moves(game_id, user)
 
 
+def start_counting_timeout(game_type, game_id, user):
+    game_class = get_class(game_type)
+    return game_class.start_counting_timeout(game_id, user)
+
+
 def make_move(game_type, game_id, user, action, move):
     game_class = get_class(game_type)
     return game_class.make_move(game_id, user, action, move)
