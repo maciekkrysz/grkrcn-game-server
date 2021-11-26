@@ -144,7 +144,6 @@ class Game(ABC):
             redis.jsondel('games', f'.{game}.players.{chair}')
             if len(redis.jsonget('games', f'.{game}.players')) == 0:
                 print(redis.jsonget('games', f'.{game}'))
-                redis.jsondel('games', f'.{game}')
         elif status == ONGOING:
             redis.jsonset('games', f'.{game}.players.{chair}.active', False)
             cls.start_counting_timeout(game_id, chair)
@@ -406,7 +405,6 @@ class Game(ABC):
         game = cls.path_to_game(game_id)
         redis.jsonset('games', f'.{game}.is_draw', True)
         cls.update_db_after_finish(game_id)
-        pass
 
     @classmethod
     def get_finish_scores(cls, game_id):
@@ -472,7 +470,6 @@ class Game(ABC):
         start_time = redis.jsonget('games', f'.{game}.move_time')
         redis.jsonset('games', f'.{game}.move_time', finish_time)
         time_delta = finish_time - start_time
-        print(user, time_delta)
         redis.jsonnumincrby('games',
                             f'.{game}.players.{user}.time', -time_delta)
 
@@ -505,7 +502,11 @@ class Game(ABC):
 
     @classmethod
     def try_finish_game(cls, game_id):
-        pass
+        if cls.is_game_finished(game_id):
+            if cls.check_if_draw(game_id):
+                cls.draw_game(game_id)
+            else:
+                cls.finish_game(game_id)
 
     @classmethod
     def check_timers(cls, game_id):
@@ -522,6 +523,19 @@ class Game(ABC):
     @classmethod
     @abstractmethod
     def is_game_finished(cls, game_id):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def check_if_draw(cls, game_id):
+        pass
+
+    @classmethod
+    @abstractmethod
+    def get_losing_nicknames(cls, game_id):
+        """
+        return [nicknames]
+        """
         pass
 
     @classmethod
