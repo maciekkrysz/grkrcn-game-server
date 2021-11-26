@@ -18,6 +18,11 @@ def create_game(game_type, user_json):
     raise Exception('Cannot create game')
 
 
+def delete_game(game_type, game_id):
+    game_class = get_class(game_type)
+    game_class.delete_game(game_id)
+
+
 def connect_to_game(game_type, game_id, user):
     game_class = get_class(game_type)
     if game_class.connect_to(game_id, user):
@@ -66,6 +71,11 @@ def game_info(game_type, game_id):
 def get_all_players(game_type, game_id):
     game_class = get_class(game_type)
     return game_class.get_all_players(game_id)
+
+
+def get_all_chairs(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.get_all_chairs(game_id)
 
 
 def current_state(game_type, game_id):
@@ -117,6 +127,15 @@ def surrend(game_type, game_id, user):
     game_class.surrend(game_id, user)
 
 
+def try_finish_game_by_undertime(game_type, game_id):
+    game_class = get_class(game_type)
+    try:
+        game_class.update_times(game_id)
+        game_class.finish_game_by_undertime(game_id)
+    except:
+        return
+
+
 def get_finish_score(game_type, game_id):
     game_class = get_class(game_type)
     return game_class.get_finish_scores(game_id)
@@ -127,9 +146,15 @@ def set_status_waiting(game_type, game_id):
     return game_class.set_status_waiting(game_id)
 
 
+def ping_game(game_type, game_id):
+    for user in get_all_players(game_type, game_id):
+        mark_active(game_type, game_id, user, False)
+
+
 def add_inactive_ping(game_type, game_id, user):
+    print(f'add inactive ping to {user}')
     game_class = get_class(game_type)
-    game_class.add_inactive_ping(game_id)
+    game_class.add_inactive_ping(game_id, user)
 
 
 def debug_info(game_type, game_id):

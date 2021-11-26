@@ -5,6 +5,8 @@ from .classes.games_handler import connect_to_game, current_username, debug_info
     game_self_info, mark_ready, set_status_waiting, start_game_possible, start_game, disconnect_from_game, \
     is_game_ongoing, surrend, get_finish_score
 
+from celery import shared_task
+
 
 PUBLIC_MESSAGES = {
     'current_state_message',
@@ -33,6 +35,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f'__game_{self.type_game}_{self.room_name}'
         self.user_group = self.room_name + self.user['nickname']
+        print(self.room_group_name)
 
         # Join room group
         await self.channel_layer.group_add(
@@ -142,6 +145,12 @@ class GameConsumer(AsyncWebsocketConsumer):
             await self.channel_layer.group_send(
                 self.user_group,
                 {'type': 'error_message', 'message': 'Cannot set active'})
+
+    async def is_alive_message(self, event):
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'is_alive',
+        }))
 
     async def current_hand_message(self, event):
         hand = current_hand(self.type_game, self.room_name,

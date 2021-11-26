@@ -88,6 +88,11 @@ class Game(ABC):
         raise Exception(f'{param_type} parameter is incorrect')
 
     @classmethod
+    def delete_game(cls, game_id):
+        game = cls.path_to_game(game_id)
+        redis.jsondel('games', f'.{game}')
+
+    @classmethod
     def get_first_possible_chair(cls, game_id):
         game = cls.path_to_game(game_id)
         chairs = redis.jsonget('games', f'.{game}.players').keys()
@@ -115,8 +120,8 @@ class Game(ABC):
         if user['nickname'] in cls.get_all_players(game_id):
             chair = cls.get_user_chair(game_id, user['nickname'])
             redis.jsonset('games', f'.{game}.players.{chair}.active', True)
-            redis.jsonset(
-                'games', f'.{game}.players.{chair}.inactive_pings', 0)
+            redis.jsonset('games',
+                          f'.{game}.players.{chair}.inactive_pings', 0)
             return True
         elif redis.jsonget('games', f'.{game}.status') == WAITING and max_players > len(players):
             if cls.get_user_chair(game_id, user):
@@ -125,6 +130,8 @@ class Game(ABC):
             #     return False
             chair = cls.get_first_possible_chair(game_id)
             redis.jsonset('games', f'.{game}.players.{chair}', user)
+            redis.jsonset('games',
+                          f'.{game}.players.{chair}.inactive_pings', 0)
             return True
         return False
 
@@ -135,6 +142,9 @@ class Game(ABC):
         status = redis.jsonget('games', f'.{game}.status')
         if status == WAITING or status == FINISHED:
             redis.jsondel('games', f'.{game}.players.{chair}')
+            if len(redis.jsonget('games', f'.{game}.players')) == 0:
+                print(redis.jsonget('games', f'.{game}'))
+                redis.jsondel('games', f'.{game}')
         elif status == ONGOING:
             redis.jsonset('games', f'.{game}.players.{chair}.active', False)
             cls.start_counting_timeout(game_id, chair)
@@ -156,6 +166,7 @@ class Game(ABC):
                 redis.jsonset(
                     'games', f'.{game}.players.{chair}.inactive_pings', 0)
             else:
+                print(f'add inactive_ping to {user}')
                 cls.add_inactive_ping(game_id, chair)
                 if redis.jsonget('games', f'.{game}.players.{chair}.inactive_pings') > 2:
                     cls.disconnect_from(game_id, user)
@@ -197,6 +208,11 @@ class Game(ABC):
         for p, values in redis.jsonget('games', f'.{game}.players').items():
             nicknames.append(values['nickname'])
         return nicknames
+
+    @classmethod
+    def get_all_chairs(cls, game_id):
+        game = cls.path_to_game(game_id)
+        return redis.jsonget('games', f'.{game}.players').keys()
 
     @classmethod
     def get_hand(cls, game_id, user):
@@ -418,7 +434,7 @@ class Game(ABC):
 
     @classmethod
     def finish_game_by_undertime(cls, game_id):
-        if not cls.is_game_finished(game_id):
+        if cls.is_game_ongoing(game_id):
             game = cls.path_to_game(game_id)
             if cls.get_undertime_user(game_id) is not None:
                 user = cls.get_undertime_user(game_id)
