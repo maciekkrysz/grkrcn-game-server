@@ -163,7 +163,11 @@ class War(Game):
 
     @classmethod
     def get_losing_nicknames(cls, game_id):
-        pass
+        game = cls.path_to_game(game_id)
+        losing = []
+        for p in redis.jsonget('games', f'.{game}.scores.lose'):
+            losing.append(p)
+        return losing
 
     def compare_card(card1, card2):
         if card1[0] == card2[0]:

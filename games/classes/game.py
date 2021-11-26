@@ -359,15 +359,16 @@ class Game(ABC):
     def surrender(cls, game_id, user):
         game = cls.path_to_game(game_id)
         redis.jsonset('games', f'.{game}.surrender', True)
-        cls.finish_game(game_id, user)
+        cls.finish_game(game_id, [user])
 
     @classmethod
-    def finish_game(cls, game_id, lose_user):
+    def finish_game(cls, game_id, lose_users):
         game = cls.path_to_game(game_id)
         players = cls.get_all_players(game_id)
-        players.remove(lose_user)
+        for loser in lose_users:
+            players.remove(loser)
 
-        redis.jsonarrappend('games', f'.{game}.scores.lose', lose_user)
+        redis.jsonset('games', f'.{game}.scores.lose', lose_users)
         for p in players:
             redis.jsonarrappend('games', f'.{game}.scores.win', p)
         redis.jsonset('games', f'.{game}.status', FINISHED)
@@ -398,7 +399,7 @@ class Game(ABC):
                 score = lose
 
             Participation.objects.get_by_userid_gametype(
-                modeltype, user_id).update(score=score)
+                user_id, modeltype).update(score=score)
 
     @classmethod
     def draw_game(cls, game_id):
@@ -498,7 +499,7 @@ class Game(ABC):
                 redis.jsonset('games', f'.{game}.end_by_timeout', True)
             else:
                 return
-            cls.finish_game(game_id, user)
+            cls.finish_game(game_id, [user])
 
     @classmethod
     def try_finish_game(cls, game_id):
@@ -506,7 +507,8 @@ class Game(ABC):
             if cls.check_if_draw(game_id):
                 cls.draw_game(game_id)
             else:
-                cls.finish_game(game_id)
+                losers = cls.get_losing_nicknames(game_id)
+                cls.finish_game(game_id, losers)
 
     @classmethod
     def check_timers(cls, game_id):
