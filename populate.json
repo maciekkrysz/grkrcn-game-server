@@ -21,7 +21,7 @@
   "model": "games.game",
   "pk": 1,
   "fields": {
-    "start_state": "2C3D4H5S/KSQHJD0C",
+    "start_state": {"hand":"2C3D4H5S/KSQHJD0C"},
     "game_type": 1,
     "datetime": "2021-11-02T10:16:19.364Z"
   }
@@ -30,7 +30,7 @@
   "model": "games.game",
   "pk": 2,
   "fields": {
-    "start_state": "2C3D4H5S/KSQHJD0C",
+    "start_state": {"hand":"2C3D4H5S/KSQHJD0C"},
     "game_type": 2,
     "datetime": "2021-11-03T15:31:31.211Z"
   }
