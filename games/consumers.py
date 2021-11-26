@@ -5,8 +5,6 @@ from .classes.games_handler import connect_to_game, current_username, debug_info
     game_self_info, mark_ready, set_status_waiting, start_game_possible, start_game, disconnect_from_game, \
     is_game_ongoing, surrend, get_finish_score
 
-from celery import shared_task
-
 
 PUBLIC_MESSAGES = {
     'current_state_message',
@@ -35,7 +33,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         self.room_name = self.scope['url_route']['kwargs']['room_id']
         self.room_group_name = f'__game_{self.type_game}_{self.room_name}'
         self.user_group = self.room_name + self.user['nickname']
-        print(self.room_group_name)
 
         # Join room group
         await self.channel_layer.group_add(
@@ -73,8 +70,8 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
         await self.send_update()
 
-
     # Receive message from WebSocket
+
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         text_data_json['type'] += '_message'
@@ -116,9 +113,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def ready_message(self, event):
-        
+
         mark_ready(self.type_game, self.room_name,
-                    self.user['nickname'], event['value'])
+                   self.user['nickname'], event['value'])
         await self.channel_layer.group_send(
             self.room_group_name,
             {'type': 'games_info_message'}
@@ -292,7 +289,8 @@ class GameConsumer(AsyncWebsocketConsumer):
                     {'type': 'current_hand_message'}
                 )
             await self.channel_layer.group_send(
-                self.room_name + current_username(self.type_game, self.room_name),
+                self.room_name +
+                current_username(self.type_game, self.room_name),
                 {'type': 'possible_moves_message'}
             )
         if force_game_info:

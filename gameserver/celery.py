@@ -15,12 +15,12 @@ app.autodiscover_tasks(lambda: settings.INSTALLED_APPS, force=True)
 
 app.conf.beat_schedule = {
     'is_alive_func': {
-        'task': 'games.tasks.is_alive',  
+        'task': 'games.tasks.is_alive',
         'schedule': 5,
     },
     'delete_empty_lobbies': {
-        'task': 'games.tasks.delete_empty_lobbies',  
-        'schedule': 60, 
+        'task': 'games.tasks.delete_empty_lobbies',
+        'schedule': 60,
     },
-}  
+}
 app.conf.timezone = 'UTC'
