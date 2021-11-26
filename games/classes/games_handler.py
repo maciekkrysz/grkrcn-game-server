@@ -124,6 +124,8 @@ def make_move(game_type, game_id, user, action, move):
     id = game_class.get_id_from_nickname(game_id, user)
 
     if game_class.make_move(game_id, user, action, move):
+        if move is None:
+            move = ''
         modeltype = GameType.objects.get_typegame_lower_nospecial(game_type)
         modelpartic = Participation.objects.get_by_userid_gametype(
             id, modeltype).last()

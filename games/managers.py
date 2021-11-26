@@ -56,7 +56,7 @@ class GameManager(models.Manager):
 
 
 class ParticipationQuerySet(models.QuerySet):
-    def get_by_userid_gametype(self, gametype, userid):
+    def get_by_userid_gametype(self, userid, gametype):
         return self.filter(game__game_type=gametype,
                            user=userid)
 
@@ -65,9 +65,9 @@ class ParticipationManager(models.Manager):
     def get_queryset(self):
         return ParticipationQuerySet(self.model, using=self._db)
 
-    def get_by_userid_gametype(self, gametype, userid):
+    def get_by_userid_gametype(self, userid, gametype):
         print(gametype, userid)
-        return self.get_queryset().get_by_userid_gametype(gametype, userid)
+        return self.get_queryset().get_by_userid_gametype(userid, gametype)
 
 
 class MoveQuerySet(models.QuerySet):

@@ -138,6 +138,14 @@ class War(Game):
         return True
 
     @classmethod
+    def check_if_draw(cls, game_id):
+        game = cls.path_to_game(game_id)
+        points1 = redis.jsonget('games', f'.{game}.players.p1.points')
+        points2 = redis.jsonget('games', f'.{game}.players.p2.points')
+        if points1 == points2:
+            return True
+
+    @classmethod
     def change_war_event(cls, game_id):
         game = cls.path_to_game(game_id)
         war_event = redis.jsonget('games', f'.{game}.war_event')
@@ -152,6 +160,10 @@ class War(Game):
             return next
         except:
             return super().get_next_player(game_id)
+
+    @classmethod
+    def get_losing_nicknames(cls, game_id):
+        pass
 
     def compare_card(card1, card2):
         if card1[0] == card2[0]:
