@@ -34,8 +34,13 @@ def redis_game_info(object_name, type_game, game_id):
 
 
 def redis_all_gametypes(object_name='games'):
-    return list(redis.jsonget(object_name, '.').keys())
-
+    try:
+        return list(redis.jsonget(object_name, '.').keys())
+    except:
+        return []
 
 def redis_all_games_ids(game_type, object_name='games'):
-    return list(redis.jsonget(object_name, f'.{game_type}').keys())
+    try:
+        return list(redis.jsonget(object_name, f'.{game_type}').keys())
+    except:
+        return []

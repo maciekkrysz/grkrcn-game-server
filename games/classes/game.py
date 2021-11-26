@@ -192,7 +192,7 @@ class Game(ABC):
             player['nickname'] = values['nickname']
             player['ranking'] = values['ranking']
             player['ready'] = values['ready']
-            player['active'] = values['active']
+            player['active'] = values['inactive_pings'] <= 2
             info['players'].append(player)
         for i in range(len(info), max_players):
             info['players']['p' + str(i+1)] = None
