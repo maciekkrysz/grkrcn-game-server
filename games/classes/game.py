@@ -215,6 +215,11 @@ class Game(ABC):
         return redis.jsonget('games', f'.{game}.players').keys()
 
     @classmethod
+    def get_players_ids(cls, game_id):
+        game = cls.path_to_game(game_id)
+        return [val['id'] for _, val in redis.jsonget('games', f'.{game}.players').items()]
+
+    @classmethod
     def get_hand(cls, game_id, user):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
@@ -315,7 +320,9 @@ class Game(ABC):
     @classmethod
     def debug_info(cls, game_id):
         game = cls.path_to_game(game_id)
-        print(redis.jsonget('games', f'.{game}'))
+        info = redis.jsonget('games', f'.{game}')
+        print(info)
+        return info
 
     @classmethod
     def get_next_player(cls, game_id):

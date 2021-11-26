@@ -31,6 +31,9 @@ class GameQuerySet(models.QuerySet):
     def get_gametype_games(self, gametype):
         return self.filter(game_type__type_name__iexact=gametype)
 
+    def get_by_gameroom_id(self, gameroom_id):
+        return self.filter(start_state__game_id=gameroom_id)
+
 
 class GameManager(models.Manager):
     def get_queryset(self):
@@ -47,6 +50,9 @@ class GameManager(models.Manager):
 
     def get_gametype_games(self, gametype):
         return self.get_queryset().get_gametype_games(gametype)
+
+    def get_by_gameroom_id(self, gameroom_id):
+        return self.get_queryset().get_by_gameroom_id(gameroom_id)
 
 
 class ParticipationQuerySet(models.QuerySet):

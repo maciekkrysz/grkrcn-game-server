@@ -21,7 +21,7 @@ class GameType(SafeDeleteModel):
 class Game(models.Model):
     # one card=two symbols; card deck=56 cards
     # chess FEN max length=90 symbols
-    start_state = models.CharField(max_length=255)
+    start_state = models.JSONField()
     game_type = models.ForeignKey(
         GameType,
         on_delete=models.CASCADE,

@@ -1,5 +1,7 @@
 from .makao import Makao
 from .war import War
+from ..models import GameType, Game, Participation
+from asgiref.sync import async_to_sync
 
 
 def get_class(game_type):
@@ -61,6 +63,15 @@ def start_game_possible(game_type, game_id):
 def start_game(game_type, game_id):
     game_class = get_class(game_type)
     game_class.start_game(game_id)
+
+    info = game_class.debug_info(game_id)
+    info['game_id'] = game_id
+    modeltype = GameType.objects.get_typegame_lower_nospecial(game_type)
+    modelgame = Game.objects.create(game_type=modeltype, start_state=info)
+    for player_id in game_class.get_players_ids(game_id):
+        Participation.objects.create(user=player_id,
+                                     game=modelgame,
+                                     score=Participation.ScoreTypes.IN_PROGRESS)
 
 
 def game_info(game_type, game_id):
