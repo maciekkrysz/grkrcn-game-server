@@ -3,7 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from .classes.games_handler import connect_to_game, current_username, debug_info, get_all_players, \
     is_game_finished, make_move, mark_active, possible_moves, current_hand, current_state, game_info, \
     game_self_info, mark_ready, set_status_waiting, start_game_possible, start_game, disconnect_from_game, \
-    is_game_ongoing, surrend, get_finish_score
+    is_game_ongoing, surrender, get_finish_score
 
 
 PUBLIC_MESSAGES = {
@@ -136,8 +136,8 @@ class GameConsumer(AsyncWebsocketConsumer):
             mark_active(self.type_game, self.room_name,
                         self.user['nickname'], event['value'])
             if not event['value']:
-                await self.send(text_data=json.dumps({'type': 'keep_alive'}))
-            await self.send_update()
+                await self.send(text_data=json.dumps({'type': 'is_alive'}))
+                await self.send_update()
         except:
             await self.channel_layer.group_send(
                 self.user_group,
@@ -197,7 +197,7 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def surrender_message(self, event):
         try:
             if is_game_ongoing(self.type_game, self.room_name):
-                surrend(self.type_game, self.room_name, self.user['nickname'])
+                surrender(self.type_game, self.room_name, self.user['nickname'])
                 await self.send_update()
 
             else:
@@ -304,6 +304,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         # TODO verify user by saml
         import secrets
         self.user = {}
-        self.user['nickname'] = 'user_' + str(secrets.randbelow(4) + 1)
+        self.user['id'] = secrets.randbelow(4) + 1
+        self.user['nickname'] = 'user_' + str(self.user['id'])
         self.user['ranking'] = 1000
         print(f'connected user: {self.user}')

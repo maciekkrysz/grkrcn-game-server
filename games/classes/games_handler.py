@@ -1,6 +1,7 @@
+from django.utils.functional import partition
 from .makao import Makao
 from .war import War
-from ..models import GameType, Game, Participation
+from ..models import GameType, Game, Participation, Move
 from asgiref.sync import async_to_sync
 
 
@@ -120,7 +121,18 @@ def start_counting_timeout(game_type, game_id, user):
 
 def make_move(game_type, game_id, user, action, move):
     game_class = get_class(game_type)
-    return game_class.make_move(game_id, user, action, move)
+    id = game_class.get_id_from_nickname(game_id, user)
+
+    if game_class.make_move(game_id, user, action, move):
+        modeltype = GameType.objects.get_typegame_lower_nospecial(game_type)
+        modelpartic = Participation.objects.get_by_userid_gametype(
+            id, modeltype).last()
+        Move.objects.create(participation=modelpartic,
+                            action=action, move=move)
+        return True
+    if game_class.is_game_finished(game_id):
+        game_class.try_finish_game(game_id)
+    return False
 
 
 def is_game_ongoing(game_type, game_id):
@@ -133,9 +145,9 @@ def is_game_finished(game_type, game_id):
     return game_class.is_game_finished(game_id)
 
 
-def surrend(game_type, game_id, user):
+def surrender(game_type, game_id, user):
     game_class = get_class(game_type)
-    game_class.surrend(game_id, user)
+    game_class.surrender(game_id, user)
 
 
 def try_finish_game_by_undertime(game_type, game_id):

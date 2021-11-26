@@ -4,7 +4,7 @@ import json
 import random
 import time
 import math
-
+from ..models import GameType, Participation
 from .cards_utils import get_cards_deck, get_random_hand
 from ..redis_utils import redis
 
@@ -220,6 +220,13 @@ class Game(ABC):
         return [val['id'] for _, val in redis.jsonget('games', f'.{game}.players').items()]
 
     @classmethod
+    def get_id_from_nickname(cls, game_id, nickname):
+        game = cls.path_to_game(game_id)
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            if values['nickname'] == nickname:
+                return values['id']
+
+    @classmethod
     def get_hand(cls, game_id, user):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
@@ -282,6 +289,8 @@ class Game(ABC):
         redis.jsonset('games', f'.{game}.stack_throw', [])
         redis.jsonset('games', f'.{game}.move_time', time.time())
         redis.jsonset('games', f'.{game}.end_by_timeout', False)
+        redis.jsonset('games', f'.{game}.surrender', False)
+        redis.jsonset('games', f'.{game}.is_draw', False)
 
     @classmethod
     def game_state(cls, game_id):
@@ -348,8 +357,9 @@ class Game(ABC):
         return redis.jsonget('games', f'.{game}.status') == ONGOING
 
     @classmethod
-    def surrend(cls, game_id, user):
+    def surrender(cls, game_id, user):
         game = cls.path_to_game(game_id)
+        redis.jsonset('games', f'.{game}.surrender', True)
         cls.finish_game(game_id, user)
 
     @classmethod
@@ -361,15 +371,56 @@ class Game(ABC):
         redis.jsonarrappend('games', f'.{game}.scores.lose', lose_user)
         for p in players:
             redis.jsonarrappend('games', f'.{game}.scores.win', p)
-        print('USTAWIANIE FINISHED')
         redis.jsonset('games', f'.{game}.status', FINISHED)
+        cls.update_db_after_finish(game_id)
+
+    @classmethod
+    def update_db_after_finish(cls, game_id):
+        print('UPDATING DB')
+        game = cls.path_to_game(game_id)
+        draw = Participation.ScoreTypes.DRAW
+        if redis.jsonget('games', f'.{game}.end_by_timeout'):
+            win = Participation.ScoreTypes.WIN_BY_DISCONNECT
+            lose = Participation.ScoreTypes.LOSE_BY_DISCONNECT
+        else:
+            win = Participation.ScoreTypes.WIN
+            lose = Participation.ScoreTypes.LOSE
+
+        modeltype = GameType.objects.get_typegame_lower_nospecial(
+            cls.__name__.lower())
+
+        for p in cls.get_all_players(game_id):
+            user_id = cls.get_id_from_nickname(game_id, p)
+            if redis.jsonget('games', f'.{game}.is_draw'):
+                score = draw
+            elif p in redis.jsonget('games', f'.{game}.scores.win'):
+                score = win
+            elif p in redis.jsonget('games', f'.{game}.scores.lose'):
+                score = lose
+
+            Participation.objects.get_by_userid_gametype(
+                modeltype, user_id).update(score=score)
+
+    @classmethod
+    def draw_game(cls, game_id):
+        game = cls.path_to_game(game_id)
+        redis.jsonset('games', f'.{game}.is_draw', True)
+        cls.update_db_after_finish(game_id)
+        pass
 
     @classmethod
     def get_finish_scores(cls, game_id):
         game = cls.path_to_game(game_id)
         scores = redis.jsonget('games', f'.{game}.scores')
-        end_by_timeout = redis.jsonget('games', f'.{game}.end_by_timeout')
-        return {'scores': scores, 'timeout': end_by_timeout}
+        if redis.jsonget('games', f'.{game}.end_by_timeout'):
+            reason = 'timeout'
+        elif redis.jsonget('games', f'.{game}.is_draw'):
+            reason = 'draw'
+        elif redis.jsonget('games', f'.{game}.surrender'):
+            reason = 'surrender'
+        else:
+            reason = 'finish'
+        return {'scores': scores, 'reason': reason}
 
     @classmethod
     def set_status_waiting(cls, game_id):
@@ -451,6 +502,10 @@ class Game(ABC):
             else:
                 return
             cls.finish_game(game_id, user)
+
+    @classmethod
+    def try_finish_game(cls, game_id):
+        pass
 
     @classmethod
     def check_timers(cls, game_id):
