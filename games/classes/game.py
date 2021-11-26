@@ -449,7 +449,7 @@ class Game(ABC):
             cls.update_current_user_time(game_id)
 
         if user is not None:
-            if not redis.jsonget('games', f'.{game}.players.{user}.active'):
+            if redis.jsonget('games', f'.{game}.players.{user}.inactive_pings') > 2:
                 print('updating inactive player', user)
                 finish_time = time.time()
                 start_time = redis.jsonget('games',
