@@ -76,7 +76,8 @@
   "pk": 1,
   "fields": {
     "participation": 1,
-    "move": "[\"2C\"]"
+    "move": "2C",
+    "action": "move"
   }
 },
 {
@@ -84,7 +85,8 @@
   "pk": 2,
   "fields": {
     "participation": 1,
-    "move": "[\"3D\"]"
+    "move": "3D",
+    "action": "move"
   }
 },
 {
@@ -92,7 +94,8 @@
   "pk": 3,
   "fields": {
     "participation": 2,
-    "move": "[\"KS\", \"QH\"]"
+    "move": "QH",
+    "action": "move"
   }
 },
 {
@@ -100,7 +103,8 @@
   "pk": 4,
   "fields": {
     "participation": 3,
-    "move": "[\"5S\", \"4H\"]"
+    "move": "4H",
+    "action": "move"
   }
 }
 ]

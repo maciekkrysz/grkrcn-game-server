@@ -62,7 +62,8 @@ class Move(models.Model):
         Participation,
         on_delete=models.CASCADE,
     )
-    move = ArrayField(models.CharField(max_length=6), blank=True)
+    action = models.CharField(max_length=6)
+    move = models.CharField(max_length=6)
     objects = MoveManager
 
     def __str__(self):
