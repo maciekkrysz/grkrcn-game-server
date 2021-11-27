@@ -2,7 +2,7 @@ import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .classes.games_handler import connect_to_game, current_username, debug_info, get_all_players, \
     is_game_finished, make_move, mark_active, possible_moves, current_hand, current_state, game_info, \
-    game_self_info, mark_ready, set_status_waiting, start_game_possible, start_game, disconnect_from_game, \
+    game_self_info, mark_ready, request_for_ranking, set_status_waiting, start_game_possible, start_game, disconnect_from_game, \
     is_game_ongoing, surrender, get_finish_score
 
 
@@ -46,6 +46,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
         if connect_to_game(self.type_game, self.room_name, self.user):
             await self.accept()
+        request_for_ranking(self.type_game, self.room_name)
 
         await self.channel_layer.group_send(
             self.user_group, {
@@ -205,11 +206,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                     self.user_group,
                     {'type': 'error_message', 'message': 'Error in message'}
                 )
-            if is_game_finished(self.type_game, self.room_name):
-                await self.channel_layer.group_send(
-                    self.room_group_name,
-                    {'type': 'end_game_message'}
-                )
+                if is_game_finished(self.type_game, self.room_name):
+                    await self.channel_layer.group_send(
+                        self.room_group_name,
+                        {'type': 'end_game_message'}
+                    )
         except Exception as err:
             print(f"Unexpected {err=}, {type(err)=}")
             await self.channel_layer.group_send(

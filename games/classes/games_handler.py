@@ -1,8 +1,10 @@
+import json
 from django.utils.functional import partition
 from .makao import Makao
 from .war import War
 from ..models import GameType, Game, Participation, Move
 from asgiref.sync import async_to_sync
+from ..rabbimq.sender import send_ranking_request, send_game_data
 
 
 def get_class(game_type):
@@ -90,6 +92,11 @@ def get_all_chairs(game_type, game_id):
     return game_class.get_all_chairs(game_id)
 
 
+def get_all_user_ids(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.get_all_user_ids(game_id)
+
+
 def current_state(game_type, game_id):
     game_class = get_class(game_type)
     game_class.check_timers(game_id)
@@ -163,7 +170,9 @@ def try_finish_game_by_undertime(game_type, game_id):
 
 def get_finish_score(game_type, game_id):
     game_class = get_class(game_type)
-    return game_class.get_finish_scores(game_id)
+    scores = game_class.get_finish_scores(game_id)
+    send_scores_to_rabbitmq(game_type, game_id, scores)
+    return scores
 
 
 def set_status_waiting(game_type, game_id):
@@ -180,6 +189,36 @@ def add_inactive_ping(game_type, game_id, user):
     print(f'add inactive ping to {user}')
     game_class = get_class(game_type)
     game_class.add_inactive_ping(game_id, user)
+
+
+def was_scores_sent(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.was_scores_sent(game_id)
+
+
+def send_scores_to_rabbitmq(game_type, game_id, scores):
+    game_class = get_class(game_type)
+    jsondata = {
+        'game_type': game_type,
+        'players': {}
+    }
+    if not was_scores_sent(game_type, game_id):
+        for endtype in scores['scores'].items():
+            for nickname in endtype[1]:
+                jsondata['players'][nickname] = game_class.get_user_score(
+                    game_id, nickname)
+                jsondata['players'][nickname]['score'] = endtype[0]
+    send_game_data(jsondata)
+
+
+def request_for_ranking(game_type, game_id):
+    jsondata = {
+        'game_type': game_type,
+        'game_id': game_id,
+        'players': get_all_user_ids(game_type, game_id)
+    }
+    print(jsondata)
+    send_ranking_request(jsondata)
 
 
 def debug_info(game_type, game_id):

@@ -109,11 +109,20 @@ class Game(ABC):
         return None
 
     @classmethod
+    def get_user_chair_by_nicknameshow(cls, game_id, nicknameshow):
+        game = cls.path_to_game(game_id)
+        for chair, values in redis.jsonget('games', f'.{game}.players').items():
+            if values['nickname_show'] == nicknameshow:
+                return chair
+        return None
+
+    @classmethod
     def connect_to(cls, game_id, user):
         game = cls.path_to_game(game_id)
         # user = {nickname, ranking}
         user['ready'] = False
         user['active'] = True
+        user['nickname_show'] = user['nickname']
         max_players = redis.jsonget(
             'games', f'.{game}.game_parameters.max_players')
         players = redis.jsonget('games', f'.{game}.players')
@@ -152,6 +161,8 @@ class Game(ABC):
     def mark_ready(cls, game_id, user, value: bool):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
+        print(user)
+        print(chair)
         if isinstance(value, bool):
             redis.jsonset('games', f'.{game}.players.{chair}.ready', value)
 
@@ -189,7 +200,7 @@ class Game(ABC):
         for p, values in players.items():
             player = {}
             player['position'] = p
-            player['nickname'] = values['nickname']
+            player['nickname'] = values['nickname_show']
             player['ranking'] = values['ranking']
             player['ready'] = values['ready']
             player['active'] = values['inactive_pings'] <= 2
@@ -207,6 +218,14 @@ class Game(ABC):
         for p, values in redis.jsonget('games', f'.{game}.players').items():
             nicknames.append(values['nickname'])
         return nicknames
+
+    @classmethod
+    def get_all_user_ids(cls, game_id):
+        game = cls.path_to_game(game_id)
+        ids = []
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            ids.append(values['id'])
+        return ids
 
     @classmethod
     def get_all_chairs(cls, game_id):
@@ -290,6 +309,7 @@ class Game(ABC):
         redis.jsonset('games', f'.{game}.end_by_timeout', False)
         redis.jsonset('games', f'.{game}.surrender', False)
         redis.jsonset('games', f'.{game}.is_draw', False)
+        redis.jsonset('games', f'.{game}.was_scores_sent', False)
 
     @classmethod
     def game_state(cls, game_id):
@@ -365,14 +385,38 @@ class Game(ABC):
     def finish_game(cls, game_id, lose_users):
         game = cls.path_to_game(game_id)
         players = cls.get_all_players(game_id)
+        lose_nicknames = []
         for loser in lose_users:
+            lose_nicknames.append(
+                cls.get_nicknameshow_by_nickname(game_id, loser))
             players.remove(loser)
 
-        redis.jsonset('games', f'.{game}.scores.lose', lose_users)
+        redis.jsonset('games', f'.{game}.scores.lose', lose_nicknames)
         for p in players:
-            redis.jsonarrappend('games', f'.{game}.scores.win', p)
+            win_nickname = cls.get_nicknameshow_by_nickname(game_id, p)
+            redis.jsonarrappend('games', f'.{game}.scores.win', win_nickname)
         redis.jsonset('games', f'.{game}.status', FINISHED)
         cls.update_db_after_finish(game_id)
+
+    @classmethod
+    def get_nickname_by_nicknameshow(cls, game_id, nickname_show):
+        game = cls.path_to_game(game_id)
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            print(values, nickname_show)
+            if values['nickname_show'] == nickname_show:
+                print('ZNALEZIONO')
+                print('ZNALEZIONO')
+                print('ZNALEZIONO')
+                print('ZNALEZIONO')
+                print(values['nickname'], nickname_show)
+                return values['nickname']
+
+    @classmethod
+    def get_nicknameshow_by_nickname(cls, game_id, nickname):
+        game = cls.path_to_game(game_id)
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            if values['nickname'] == nickname:
+                return values['nickname_show']
 
     @classmethod
     def update_db_after_finish(cls, game_id):
@@ -391,11 +435,14 @@ class Game(ABC):
 
         for p in cls.get_all_players(game_id):
             user_id = cls.get_id_from_nickname(game_id, p)
+            nick = cls.get_nicknameshow_by_nickname(game_id, p)
+            print('tutaj drukuje')
+            print(user_id, p)
             if redis.jsonget('games', f'.{game}.is_draw'):
                 score = draw
-            elif p in redis.jsonget('games', f'.{game}.scores.win'):
+            elif nick in redis.jsonget('games', f'.{game}.scores.win'):
                 score = win
-            elif p in redis.jsonget('games', f'.{game}.scores.lose'):
+            elif nick in redis.jsonget('games', f'.{game}.scores.lose'):
                 score = lose
 
             Participation.objects.get_by_userid_gametype(
@@ -420,6 +467,34 @@ class Game(ABC):
         else:
             reason = 'finish'
         return {'scores': scores, 'reason': reason}
+
+    @classmethod
+    def get_user_score(cls, game_id, nickname_show):
+        game = cls.path_to_game(game_id)
+        print(nickname_show)
+        nickname = cls.get_nickname_by_nicknameshow(game_id, nickname_show)
+        print(nickname)
+        info = {}
+        max_time = redis.jsonget(
+            'games', f'.{game}.game_parameters.time_per_player')
+        chair = cls.get_user_chair(game_id, nickname)
+        # points = ranking
+        info['points'] = 10
+        info['left'] = False
+        info['moves'] = 0
+        info['time_sec'] = int(max_time -
+                               redis.jsonget('games', f'.{game}.players.{chair}.time'))
+        nickname = cls.get_nickname_by_nicknameshow(game_id, nickname)
+        if nickname == cls.get_timeouted_user(game_id):
+            info['left'] = True
+        return info
+
+    @classmethod
+    def was_scores_sent(cls, game_id):
+        game = cls.path_to_game(game_id)
+        ret = redis.jsonget('games', f'.{game}.was_scores_sent')
+        redis.jsonset('games', f'.{game}.was_scores_sent', True)
+        return ret
 
     @classmethod
     def set_status_waiting(cls, game_id):
