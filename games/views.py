@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import render
 from django.conf import settings
 from django.urls import reverse
@@ -44,6 +45,11 @@ def games(request):
     data = list(GameType.objects.all().values('type_name', 'description'))
     for game in data:
         game['name'] = normalize_str(game['type_name']).lower()
+    request.session['cos'] = 'costam'
+    request.session['cos2'] = 'costam'
+    print(request.session.__dict__)
+    print(request.session.get_expiry_date())
+    print(datetime.now())
     return JsonResponse(data, safe=False)
 
 
