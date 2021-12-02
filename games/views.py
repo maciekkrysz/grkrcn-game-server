@@ -104,6 +104,7 @@ def saml_view(request):
     attributes = False
     paint_logout = False
 
+
     request_id = None
     if 'AuthNRequestID' in request.session:
         request_id = request.session['AuthNRequestID']
@@ -202,6 +203,14 @@ def saml_view(request):
 
 
 def attrs(request):
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print('redirected')
+    print(request)
     req = prepare_django_request(request)
     auth = init_saml_auth(req)
     errors = []
@@ -233,13 +242,14 @@ def attrs(request):
     # for el in request.__dict__.items():
     #     print(el)
     #     print()
-    print(request.session.__dict__)
+    print(request.session.__dict__.items())
     print('keys============')
     print(request.GET.keys())
     # request_id = request.GET['SAMLResponse']
     print(request.session.keys())
     print(request_id)
-    auth.process_response(request_id=request_id) 
+    print(auth.__dict__)
+    # auth.process_response(request_id=request_id) 
     print('---')
     print(auth.get_session_index())
     print(auth.get_attributes())
@@ -249,22 +259,32 @@ def attrs(request):
     attributes = False
     paint_logout = False
 
-    saml_settings = OneLogin_Saml2_Settings(
-        settings=None, custom_base_path=settings.SAML_FOLDER, sp_validation_only=True)
-    cos = OneLogin_Saml2_Response(saml_settings,request.POST['SAMLResponse'])
 
-    print(cos.is_valid(request.POST))
-    print(cos.get_attributes())
-    print(cos.get_session_index())
-    print(cos.get_nameid_data())
-    print(cos.get_nameid())
+    # print(request.POST)
 
-    if 'samlUserdata' in request.session:
-        paint_logout = True
-        if len(request.session['samlUserdata']) > 0:
-            attributes = request.session['samlUserdata'].items()
-    return JsonResponse({'paint_logout': paint_logout,
-                   'attributes': attributes})
+    # saml_settings = OneLogin_Saml2_Settings(
+    #     settings=None, custom_base_path=settings.SAML_FOLDER, sp_validation_only=True)
+    # cos = OneLogin_Saml2_Response(saml_settings,request.POST['SAMLResponse'])
+
+    # print(cos.is_valid(request.POST))
+    # print(cos.get_attributes())
+    # print(cos.get_session_index())
+    # print(cos.get_nameid_data())
+    # print(cos.get_nameid())
+    # print(cos.response)
+    # time = OneLogin_Saml2_Utils.now()
+    # print(OneLogin_Saml2_Utils.parse_time_to_SAML(time))
+    # print(cos.validate_timestamps())
+
+    # print(cos.get_session_not_on_or_after())
+    # print()
+
+    # print(request.session.__dict__)
+    # if 'samlUserdata' in request.session:
+    #     paint_logout = True
+    #     if len(request.session['samlUserdata']) > 0:
+    #         attributes = request.session['samlUserdata'].items()
+    return JsonResponse({'attributes': ''})
     # return render(request, 'attrs.html',
     #               {'paint_logout': paint_logout,
     #                'attributes': attributes})
