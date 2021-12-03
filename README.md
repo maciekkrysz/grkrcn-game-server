@@ -23,6 +23,13 @@ $ pip install -r requirements.txt
 Create .env file or rename .env.local to .env
 
 ## Development server
+### Security in production
+Dont use certs (saml/certs/) from repository. To generate new certs use
+```
+openssl req -new -x509 -days 3652 -nodes -out sp.crt -keyout sp.key
+```
+In production saml/settings.json strict param MUST be set as "true"
+
 ### Do migration
 ```
 $ python manage.py migrate
