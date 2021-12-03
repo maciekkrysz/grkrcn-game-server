@@ -13,6 +13,7 @@ WAITING = 'waiting'
 ONGOING = 'ongoing'
 FINISHED = 'finished'
 MAX_TIMEOUT = 10
+INACTIVE_PINGS_DISC = 3
 
 
 class Game(ABC):
@@ -178,7 +179,7 @@ class Game(ABC):
             else:
                 print(f'add inactive_ping to {user}')
                 cls.add_inactive_ping(game_id, chair)
-                if redis.jsonget('games', f'.{game}.players.{chair}.inactive_pings') > 2:
+                if redis.jsonget('games', f'.{game}.players.{chair}.inactive_pings') > INACTIVE_PINGS_DISC:
                     cls.disconnect_from(game_id, user)
 
     @classmethod
