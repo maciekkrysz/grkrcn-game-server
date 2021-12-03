@@ -36,7 +36,7 @@ def game_lobbies(request, game_name):
 
 def lobby_info(request, game_name, game_id):
     info = redis_game_info('games', game_name, game_id)
-    return JsonResponse({'data': info})
+    return JsonResponse(info)
 
 
 def game_info(request, game_name):
