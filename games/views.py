@@ -50,15 +50,15 @@ def games(request):
     print(request.session.__dict__)
     print(request.session.get_expiry_date())
     print(datetime.now())
+    if not request.session.session_key:
+        request.session.save()
     return JsonResponse(data, safe=False)
 
 
-def game_lobbies(request, game_name):
-    request.session['cos2222'] = 'costam'
+def game_lobby(request, game_name):
     print(request.session.__dict__)
-    request.session.save()
-    games = redis_list_from_dict('games', f'.{game_name}')
-    # games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
+    games = redis_list_from_dict('available_games', f'.{game_name}')
+    games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
     games_to_send = []
     for game in games:
         id, _ = game.popitem()
@@ -73,6 +73,7 @@ def lobby_info(request, game_name, game_id):
 
 
 def game_info(request, game_name):
+    print(request.session.__dict__)
     for typegame in list(GameType.objects.all().values('type_name', 'description')):
         if normalize_str(typegame['type_name']).lower() == game_name:
             typegame['name'] = game_name
@@ -82,6 +83,7 @@ def game_info(request, game_name):
 
 @ensure_csrf_cookie
 def game_create(request, game_name):
+    print(request.session.__dict__)
     if request.method == 'GET':
         try:
             with open(f'games/games_configs/{game_name}.json') as json_file:
@@ -109,6 +111,7 @@ def saml_view(request):
     success_slo = False
     attributes = False
     paint_logout = False
+    print(request.session.__dict__)
 
 
     request_id = None
@@ -160,12 +163,9 @@ def saml_view(request):
             request.session['samlNameIdNameQualifier'] = auth.get_nameid_nq()
             request.session['samlNameIdSPNameQualifier'] = auth.get_nameid_spnq()
             request.session['samlSessionIndex'] = auth.get_session_index()
-            print(request.session.__dict__)
             print(req['post_data'].keys())
             print(auth.get_session_expiration())
-            print(request.session.keys())
-            if not '_SessionBase__session_key' in request.session.keys():
-                print('zapisywanie sesji')
+            if not request.session.session_key:
                 request.session.save()
             print(request.session.__dict__)
             return JsonResponse({'authorized': True})
