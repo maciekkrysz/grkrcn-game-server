@@ -25,8 +25,19 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['api-gateway', 'localhost']
+ALLOWED_HOSTS = ['api-gateway', 'localhost', 'https://localhost:3000',
+    'https://localhost:5000',
+    'https://localhost:8080',]
+# CORS_ALLOWED_ORIGINS = [
+#     'https://localhost:3000',
+#     'https://localhost:5000',
+#     'https://localhost:8080',
+# ]
 CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_METHODS = [
+    "POST",
+]
+CORS_ALLOW_CREDENTIALS = True
 
 # Application definition
 
