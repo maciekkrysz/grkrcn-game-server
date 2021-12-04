@@ -55,7 +55,7 @@ def games(request):
     return JsonResponse(data, safe=False)
 
 
-def game_lobby(request, game_name):
+def game_lobbies(request, game_name):
     print(request.session.__dict__)
     games = redis_list_from_dict('available_games', f'.{game_name}')
     games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
