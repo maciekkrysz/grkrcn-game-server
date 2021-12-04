@@ -57,13 +57,14 @@ def games(request):
 
 def game_lobbies(request, game_name):
     print(request.session.__dict__)
-    games = redis_list_from_dict('available_games', f'.{game_name}')
-    games.extend(redis_list_from_dict('ongoing_games', f'.{game_name}'))
+    games = redis_list_from_dict('games', f'.{game_name}')
     games_to_send = []
+    print(games)
     for game in games:
         id, _ = game.popitem()
         game_info = redis_game_info('games', game_name, id)
         games_to_send.append(game_info)
+    print(games_to_send)
     return JsonResponse({'lobbies': games_to_send})
 
 
@@ -168,6 +169,7 @@ def saml_view(request):
             if not request.session.session_key:
                 request.session.save()
             print(request.session.__dict__)
+            print(11111)
             return JsonResponse({'authorized': True})
             
         return JsonResponse({'authorized': False}, status=401)
