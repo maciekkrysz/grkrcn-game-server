@@ -116,6 +116,12 @@ def current_username(game_type, game_id):
     return game_class.current_username(game_id)
 
 
+def current_user_id(game_type, game_id):
+    username = current_username(game_type, game_id)
+    game_class = get_class(game_type)
+    return game_class.get_id_from_nickname(game_id, username)
+
+
 def possible_moves(game_type, game_id, user):
     game_class = get_class(game_type)
     return game_class.possible_moves(game_id, user)

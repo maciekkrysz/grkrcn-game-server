@@ -1,6 +1,6 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
-from .classes.games_handler import connect_to_game, current_username, debug_info, get_all_players, \
+from .classes.games_handler import connect_to_game, current_user_id, debug_info, get_all_user_ids, \
     is_game_finished, make_move, mark_active, possible_moves, current_hand, current_state, game_info, \
     game_self_info, mark_ready, request_for_ranking, set_status_waiting, start_game_possible, start_game, disconnect_from_game, \
     is_game_ongoing, surrender, get_finish_score
@@ -284,14 +284,15 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {'type': 'current_state_message'}
             )
-            for player in get_all_players(self.type_game, self.room_name):
+            for player in get_all_user_ids(self.type_game, self.room_name):
+                print(player)
                 await self.channel_layer.group_send(
-                    self.room_name + player,
+                    self.room_name + str(player),
                     {'type': 'current_hand_message'}
                 )
             await self.channel_layer.group_send(
                 self.room_name +
-                current_username(self.type_game, self.room_name),
+                str(current_user_id(self.type_game, self.room_name)),
                 {'type': 'possible_moves_message'}
             )
         if force_game_info:
