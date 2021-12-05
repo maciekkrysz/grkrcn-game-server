@@ -21,7 +21,7 @@ def is_alive():
                     'type': 'is_alive_message',
                 }
             )
-            # try_finish_game_by_undertime(game_type, id)
+            try_finish_game_by_undertime(game_type, id)
 
             if any_update_in_game(game_type, id):
                 async_to_sync(channel_layer.group_send)(
