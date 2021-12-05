@@ -54,7 +54,7 @@ docker compose exec game_server celery -A gameserver worker -l info
 
 ### Add ranking worker
 ```
-docker compose exec game_server python ranking_worker.py
+docker compose exec game_server python games/ranking_worker.py
 ```
 
 
