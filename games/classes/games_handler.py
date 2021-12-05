@@ -202,26 +202,42 @@ def was_scores_sent(game_type, game_id):
     return game_class.was_scores_sent(game_id)
 
 
+def any_update_in_game(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.any_update_in_game(game_id)
+
+
+def any_userscores_to_send(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.any_userscores_to_send(game_id)
+
+
 def send_scores_to_rabbitmq(game_type, game_id, scores):
     game_class = get_class(game_type)
     jsondata = {
         'game_type': game_type,
         'players': {}
     }
-    if not was_scores_sent(game_type, game_id):
-        for endtype in scores['scores'].items():
-            for nickname in endtype[1]:
-                jsondata['players'][nickname] = game_class.get_user_score(
-                    game_id, nickname)
-                jsondata['players'][nickname]['score'] = endtype[0]
-    send_game_data(jsondata)
+    try:
+        if not was_scores_sent(game_type, game_id):
+            for endtype in scores['scores'].items():
+                for nickname in endtype[1]:
+                    userid = game_class.get_id_from_nickname(game_id, nickname)
+                    jsondata['players'][userid] = game_class.get_user_score(
+                        game_id, nickname)
+                    jsondata['players'][userid]['score'] = endtype[0]
+                    if jsondata['players'][userid]['score'] == 'lose':
+                        jsondata['players'][userid]['points'] = -5
+            send_game_data(jsondata)
+    except Exception as err:
+        print(f"Unexpected {err=}, {type(err)=}")
 
 
-def request_for_ranking(game_type, game_id):
+def request_for_ranking(game_type, game_id, players_id):
     jsondata = {
         'game_type': game_type,
         'game_id': game_id,
-        'players': get_all_user_ids(game_type, game_id)
+        'players': players_id
     }
     print(jsondata)
     send_ranking_request(jsondata)

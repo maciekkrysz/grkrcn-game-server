@@ -23,17 +23,21 @@ def callback_receive_rankings(ch, method, properties, body):
         }
     }
     """
-    body = json.loads(body)
-    game_path = body['game_type'] + '.' + str(body['game_id'])
-    print(f"Received {body}")
-    for player_id in body['players'].keys():
-        player = body['players'][player_id]
-        for chair in redis.jsonget('games', f'.{game_path}.players').keys():
-            if redis.jsonget('games', f'.{game_path}.players.{chair}.id') == int(player_id):
-                redis.jsonset('games',
-                              f'.{game_path}.players.{chair}.nickname_show', player['nickname'])
-                redis.jsonset('games',
-                              f'.{game_path}.players.{chair}.ranking', player['rank'])
+    try:
+        body = json.loads(body)
+        game_path = body['game_name'] + '.' + str(body['game_id'])
+        print(f"Received {body}")
+        for player_id in body['players'].keys():
+            player = body['players'][player_id]
+            for chair in redis.jsonget('games', f'.{game_path}.players').keys():
+                if redis.jsonget('games', f'.{game_path}.players.{chair}.id') == int(player_id):
+                    redis.jsonset('games',
+                                f'.{game_path}.players.{chair}.nickname_show', player['nickname'])
+                    redis.jsonset('games',
+                                f'.{game_path}.players.{chair}.ranking', player['rank'])
+                    redis.jsonset('games', f'.{game_path}.any_update_in_game', True)
+    except Exception as err:
+        print(f"Unexpected {err=}, {type(err)=}")
 
 
 connection = pika.BlockingConnection(

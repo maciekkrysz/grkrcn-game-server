@@ -46,7 +46,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
         if connect_to_game(self.type_game, self.room_name, self.user):
             await self.accept()
-        request_for_ranking(self.type_game, self.room_name)
+        request_for_ranking(self.type_game, self.room_name, [self.user['id']])
 
         await self.channel_layer.group_send(
             self.user_group, {
@@ -198,7 +198,8 @@ class GameConsumer(AsyncWebsocketConsumer):
     async def surrender_message(self, event):
         try:
             if is_game_ongoing(self.type_game, self.room_name):
-                surrender(self.type_game, self.room_name, self.user['nickname'])
+                surrender(self.type_game, self.room_name,
+                          self.user['nickname'])
                 await self.send_update()
 
             else:
@@ -278,6 +279,15 @@ class GameConsumer(AsyncWebsocketConsumer):
             'type': 'error'
         }))
 
+    async def send_update_message(self, event):
+        await self.send_update()
+
+    async def send_scores_message(self, event):
+        await self.channel_layer.group_send(
+                self.room_group_name,
+                {'type': 'end_game_message'}
+            )
+
     async def send_update(self, force_game_info=True):
         if is_game_ongoing(self.type_game, self.room_name):
             await self.channel_layer.group_send(
@@ -285,7 +295,6 @@ class GameConsumer(AsyncWebsocketConsumer):
                 {'type': 'current_state_message'}
             )
             for player in get_all_user_ids(self.type_game, self.room_name):
-                print(player)
                 await self.channel_layer.group_send(
                     self.room_name + str(player),
                     {'type': 'current_hand_message'}
@@ -312,5 +321,5 @@ class GameConsumer(AsyncWebsocketConsumer):
         print(sessiondata['samlUserdata']['user_nickname'][0])
         self.user['id'] = int(sessiondata['samlUserdata']['user_id'][0])
         self.user['nickname'] = sessiondata['samlUserdata']['user_nickname'][0]
-        self.user['ranking'] = 1000
+        self.user['ranking'] = 0
         print(f'connected user: {self.user}')
