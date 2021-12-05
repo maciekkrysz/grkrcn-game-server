@@ -255,6 +255,13 @@ class Game(ABC):
                 return values['id']
 
     @classmethod
+    def get_nickname_from_id(cls, game_id, id):
+        game = cls.path_to_game(game_id)
+        for p, values in redis.jsonget('games', f'.{game}.players').items():
+            if values['id'] == id:
+                return values['nickname']
+
+    @classmethod
     def get_hand(cls, game_id, user):
         game = cls.path_to_game(game_id)
         chair = cls.get_user_chair(game_id, user)
@@ -420,11 +427,6 @@ class Game(ABC):
         for p, values in redis.jsonget('games', f'.{game}.players').items():
             print(values, nickname_show)
             if values['nickname_show'] == nickname_show:
-                print('ZNALEZIONO')
-                print('ZNALEZIONO')
-                print('ZNALEZIONO')
-                print('ZNALEZIONO')
-                print(values['nickname'], nickname_show)
                 return values['nickname']
 
     @classmethod
@@ -485,9 +487,7 @@ class Game(ABC):
     @classmethod
     def get_user_score(cls, game_id, nickname_show):
         game = cls.path_to_game(game_id)
-        print(nickname_show)
         nickname = cls.get_nickname_by_nicknameshow(game_id, nickname_show)
-        print(nickname)
         info = {}
         max_time = redis.jsonget(
             'games', f'.{game}.game_parameters.time_per_player')
@@ -507,8 +507,24 @@ class Game(ABC):
     def was_scores_sent(cls, game_id):
         game = cls.path_to_game(game_id)
         ret = redis.jsonget('games', f'.{game}.scores_to_rabbit')
-        redis.jsonset('games', f'.{game}.scores_to_rabbit', True)
         return ret
+
+    @classmethod
+    def set_scores_send(cls, game_id, val=True):
+        game = cls.path_to_game(game_id)
+        redis.jsonset('games', f'.{game}.scores_to_rabbit', val)
+        
+    @classmethod
+    def update_rankings(cls, game_id, jsondata):
+        game = cls.path_to_game(game_id)
+        for id in jsondata['players']:
+            print(id)
+            nickname = cls.get_nickname_from_id(game_id, id)
+            chair = cls.get_user_chair(game_id, nickname)
+            rank = jsondata['players'][id]['points']
+            redis.jsonnumincrby('games', f'.{game}.players.{chair}.ranking', rank)
+            print(redis.jsonget('games', f'.{game}.players.{chair}.ranking'))
+        redis.jsonset('games', f'.{game}.any_update_in_game', True)
 
     @classmethod
     def any_update_in_game(cls, game_id):
@@ -562,7 +578,6 @@ class Game(ABC):
                 start_time = redis.jsonget('games',
                                            f'.{game}.players.{user}.timeout_start')
                 time_delta = finish_time - start_time
-                print(finish_time, start_time)
                 redis.jsonnumincrby('games',
                                     f'.{game}.players.{user}.timeout', -time_delta)
                 print('setting timeout in update_user_time')

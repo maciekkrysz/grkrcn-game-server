@@ -229,6 +229,8 @@ def send_scores_to_rabbitmq(game_type, game_id, scores):
                     if jsondata['players'][userid]['score'] == 'lose':
                         jsondata['players'][userid]['points'] = -5
             send_game_data(jsondata)
+            game_class.set_scores_send(game_id, True)
+            game_class.update_rankings(game_id, jsondata)
     except Exception as err:
         print(f"Unexpected {err=}, {type(err)=}")
 
