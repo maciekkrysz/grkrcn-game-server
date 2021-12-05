@@ -46,6 +46,18 @@ $ python manage.py runserver
 docker-compose up --build
 ```
 
+### Start celery
+```
+docker compose exec game_server celery -A gameserver beat -l info
+docker compose exec game_server celery -A gameserver worker -l info
+```
+
+### Add ranking worker
+```
+docker compose exec game_server python ranking_worker.py
+```
+
+
 ### Testing
 ```
 docker compose exec game_server python manage.py test
