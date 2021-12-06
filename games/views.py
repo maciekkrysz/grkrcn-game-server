@@ -105,6 +105,9 @@ def saml_view(request):
         # return_to = OneLogin_Saml2_Utils.get_self_url(req) # api-gateway
         # return to game_id lobby
         return_to = 'localhost:8080/games/'
+        print(request.session.__dict__)
+        if 'samlUserdata' in request.session:
+            return JsonResponse({'authorized': True})
         return HttpResponse(auth.login(return_to), status=401)
     elif 'acs' in req['get_data']:
         req['post_data']['SAMLResponse'] = req['get_data']['SAMLResponse']
