@@ -1,9 +1,10 @@
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .classes.games_handler import connect_to_game, current_user_id, debug_info, get_all_user_ids, \
-    is_game_finished, make_move, mark_active, possible_moves, current_hand, current_state, game_info, \
-    game_self_info, mark_ready, request_for_ranking, set_status_waiting, start_game_possible, start_game, disconnect_from_game, \
-    is_game_ongoing, surrender, get_finish_score
+    is_game_finished, is_state_to_send, make_move, mark_active, possible_moves, current_hand, \
+    current_state, game_info, game_self_info, mark_ready, request_for_ranking, set_status_waiting, \
+    start_game_possible, start_game, disconnect_from_game, is_game_ongoing, surrender, \
+    get_finish_score, game_state
 
 
 PUBLIC_MESSAGES = {
@@ -159,7 +160,22 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def current_state_message(self, event):
+        # send game_state(status=ongoing) or scores(status=finished)
         state = current_state(self.type_game, self.room_name)
+        if 'scores' in state:
+            msgtype = 'scores'
+        else:
+            msgtype = 'current_state'
+        await self.send(text_data=json.dumps({
+            'data': state,
+            'type': msgtype
+        }))
+
+    async def get_state_message(self, event):
+        # force send game_state
+        state = game_state(self.type_game, self.room_name)
+        if state['current_user'] is None:
+            state['current_user'] = 'p1'
         await self.send(text_data=json.dumps({
             'data': state,
             'type': 'current_state'
@@ -284,11 +300,24 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def send_scores_message(self, event):
         await self.channel_layer.group_send(
-                self.room_group_name,
-                {'type': 'end_game_message'}
-            )
+            self.room_group_name,
+            {'type': 'end_game_message'}
+        )
 
     async def send_update(self, force_game_info=True):
+        # this if has to be there because after throw last card 
+        # everybody still see state with one card on hand
+        if is_state_to_send(self.type_game, self.room_name):
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {'type': 'get_state_message'}
+            )
+            for player in get_all_user_ids(self.type_game, self.room_name):
+                await self.channel_layer.group_send(
+                    self.room_name + str(player),
+                    {'type': 'current_hand_message'}
+                )
+
         if is_game_ongoing(self.type_game, self.room_name):
             await self.channel_layer.group_send(
                 self.room_group_name,
@@ -303,6 +332,11 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_name +
                 str(current_user_id(self.type_game, self.room_name)),
                 {'type': 'possible_moves_message'}
+            )
+        elif is_game_finished(self.type_game, self.room_name):
+            await self.channel_layer.group_send(
+                self.room_group_name,
+                {'type': 'current_state_message'}
             )
         if force_game_info:
             await self.channel_layer.group_send(

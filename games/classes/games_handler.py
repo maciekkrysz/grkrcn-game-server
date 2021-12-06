@@ -97,13 +97,24 @@ def get_all_user_ids(game_type, game_id):
     return game_class.get_all_user_ids(game_id)
 
 
+def is_state_to_send(game_type, game_id):
+    game_class = get_class(game_type)
+    if game_class.is_state_to_send(game_id):
+        return game_class.game_state(game_id)
+
+
 def current_state(game_type, game_id):
     game_class = get_class(game_type)
     game_class.check_timers(game_id)
     if game_class.is_game_ongoing(game_id):
-        return game_class.game_state(game_id)
+        return game_state(game_type, game_id)
     elif game_class.is_game_finished(game_id):
         return game_class.get_finish_scores(game_id)
+
+
+def game_state(game_type, game_id):
+    game_class = get_class(game_type)
+    return game_class.game_state(game_id)
 
 
 def current_hand(game_type, game_id, user):
@@ -144,10 +155,9 @@ def make_move(game_type, game_id, user, action, move):
             id, modeltype).last()
         Move.objects.create(participation=modelpartic,
                             action=action, move=move)
-        return True
     if game_class.is_game_finished(game_id):
         game_class.try_finish_game(game_id)
-    return False
+    return True
 
 
 def is_game_ongoing(game_type, game_id):
@@ -157,7 +167,10 @@ def is_game_ongoing(game_type, game_id):
 
 def is_game_finished(game_type, game_id):
     game_class = get_class(game_type)
-    return game_class.is_game_finished(game_id)
+    try:
+        return game_class.is_game_finished(game_id)
+    except:
+        return None
 
 
 def surrender(game_type, game_id, user):
@@ -220,14 +233,22 @@ def send_scores_to_rabbitmq(game_type, game_id, scores):
     }
     try:
         if not was_scores_sent(game_type, game_id):
-            for endtype in scores['scores'].items():
-                for nickname in endtype[1]:
-                    userid = game_class.get_id_from_nickname(game_id, nickname)
+            if game_class.is_game_drew(game_id):
+                for userid in game_class.get_players_ids(game_id):
+                    nickname = game_class.get_nickname_from_id(game_id, userid)
                     jsondata['players'][userid] = game_class.get_user_score(
-                        game_id, nickname)
-                    jsondata['players'][userid]['score'] = endtype[0]
-                    if jsondata['players'][userid]['score'] == 'lose':
-                        jsondata['players'][userid]['points'] = -5
+                            game_id, nickname)
+                    jsondata['players'][userid]['score'] = 'draw'
+                    jsondata['players'][userid]['points'] = -1
+            else:
+                for endtype in scores['scores'].items():
+                    for nickname in endtype[1]:
+                        userid = game_class.get_id_from_nickname(game_id, nickname)
+                        jsondata['players'][userid] = game_class.get_user_score(
+                            game_id, nickname)
+                        jsondata['players'][userid]['score'] = endtype[0]
+                        if jsondata['players'][userid]['score'] == 'lose':
+                            jsondata['players'][userid]['points'] = -5
             send_game_data(jsondata)
             game_class.set_scores_send(game_id, True)
             game_class.update_rankings(game_id, jsondata)

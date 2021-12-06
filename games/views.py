@@ -17,6 +17,9 @@ from onelogin.saml2.utils import OneLogin_Saml2_Utils
 from onelogin.saml2.response import OneLogin_Saml2_Response
 
 
+SAML_SESSION_EXPIRE = 10
+
+
 def init_saml_auth(req):
     auth = OneLogin_Saml2_Auth(req, custom_base_path=settings.SAML_FOLDER)
     return auth
@@ -107,7 +110,8 @@ def saml_view(request):
         return_to = 'localhost:8080/games/'
         if 'samlUserdata' in request.session:
             # print('Uncomment line below')
-            return JsonResponse({'authorized': True})
+            # return JsonResponse({'authorized': True})
+            pass
         return HttpResponse(auth.login(return_to), status=401)
     elif 'acs' in req['get_data']:
         req['post_data']['SAMLResponse'] = req['get_data']['SAMLResponse']
@@ -122,7 +126,7 @@ def saml_view(request):
         if not errors:
             if 'AuthNRequestID' in request.session:
                 del request.session['AuthNRequestID']
-            request.session.set_expiry(300)
+            request.session.set_expiry(SAML_SESSION_EXPIRE)
             request.session['samlUserdata'] = auth.get_attributes()
             request.session['samlNameId'] = auth.get_nameid()
             request.session['samlNameIdFormat'] = auth.get_nameid_format()

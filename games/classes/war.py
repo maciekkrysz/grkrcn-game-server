@@ -47,7 +47,9 @@ class War(Game):
         player = cls.get_user_chair(game_id, user)
         last_action = redis.jsonget('games',
                                     f'.{game}.players.{player}.last_action')
-        if last_action == 'take':
+        stack_draw = redis.jsonget('games', f'.{game}.stack_draw')
+
+        if last_action == 'take' or len(stack_draw) == 0:
             return {
                 'possible_actions': ['throw'],
                 'possible_moves': cls.get_hand(game_id, user),
@@ -70,10 +72,15 @@ class War(Game):
                 redis.jsonarrpop('games', f'.{game}.stack_draw', card_index)
                 redis.jsonarrappend('games', f'.{game}.players.{player}.hand',
                                     random_card)
-                redis.jsonset('games', f'.{game}.current_player',
-                              cls.get_next_player(game_id))
 
             elif action == 'throw' and move in poss_moves['possible_moves']:
+                if len(redis.jsonget('games', f'.{game}.stack_draw')) == 0:
+                    redis.jsonset(
+                        'games', f'.{game}.next_player', cls.get_next_player(game_id))
+                else:
+                    redis.jsonset(
+                        'games', f'.{game}.next_player', cls.current_player(game_id))
+
                 if redis.jsonget('games', f'.{game}.war_event_next_move'):
                     redis.jsonset('games', f'.{game}.war_event', True)
                 else:
@@ -102,6 +109,9 @@ class War(Game):
                                 'games', f'.{game}.war_event_next_move', True)
                             redis.jsonset(
                                 'games', f'.{game}.players.{player}.last_action', action)
+
+                            redis.jsonset('games', f'.{game}.current_player',
+                                          cls.get_next_player(game_id))
                             return True
 
                         redis.jsonnumincrby(
@@ -113,7 +123,8 @@ class War(Game):
                             'games', f'.{game}.war_event_next_move', False)
         else:
             return False
-
+        redis.jsonset('games', f'.{game}.current_player',
+                      cls.get_next_player(game_id))
         redis.jsonset('games', f'.{game}.players.{player}.last_action', action)
         return True
 
@@ -134,7 +145,6 @@ class War(Game):
                                             f'.{game}.players').items():
             if len(values['hand']) != 0:
                 return False
-        redis.jsonset('games', f'.{game}.status', FINISHED)
         return True
 
     @classmethod
@@ -142,7 +152,7 @@ class War(Game):
         game = cls.path_to_game(game_id)
         points1 = redis.jsonget('games', f'.{game}.players.p1.points')
         points2 = redis.jsonget('games', f'.{game}.players.p2.points')
-        if points1 == points2:
+        if points1 == points2 or redis.jsonget('games', f'.{game}.is_draw'):
             return True
 
     @classmethod
@@ -160,6 +170,19 @@ class War(Game):
             return next
         except:
             return super().get_next_player(game_id)
+
+    @classmethod
+    def choose_losers(cls, game_id):
+        game = cls.path_to_game(game_id)
+        redis.jsonset('games', f'.{game}.scores.lose', [])
+        points1 = redis.jsonget('games', f'.{game}.players.p1.points')
+        points2 = redis.jsonget('games', f'.{game}.players.p2.points')
+        if points1 < points2:
+            lose = 'p1'
+        else:
+            lose = 'p2'
+        lose_nick = redis.jsonget('games', f'.{game}.players.{lose}.nickname')
+        redis.jsonarrappend('games', f'.{game}.scores.lose', lose_nick)
 
     @classmethod
     def get_losing_nicknames(cls, game_id):
