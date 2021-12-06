@@ -346,13 +346,9 @@ class GameConsumer(AsyncWebsocketConsumer):
             )
 
     def get_user_by_saml(self):
-        # TODO verify user by saml
-        import secrets
         self.user = {}
         print(self.scope['session']._wrapped.__dict__)
         sessiondata = self.scope['session']._wrapped._session_cache
-        print(int(sessiondata['samlUserdata']['user_id'][0]))
-        print(sessiondata['samlUserdata']['user_nickname'][0])
         self.user['id'] = int(sessiondata['samlUserdata']['user_id'][0])
         self.user['nickname'] = sessiondata['samlUserdata']['user_nickname'][0]
         self.user['ranking'] = 0
