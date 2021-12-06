@@ -106,8 +106,8 @@ def saml_view(request):
         # return to game_id lobby
         return_to = 'localhost:8080/games/'
         if 'samlUserdata' in request.session:
-            print('Uncomment line below')
-            # return JsonResponse({'authorized': True})
+            # print('Uncomment line below')
+            return JsonResponse({'authorized': True})
         return HttpResponse(auth.login(return_to), status=401)
     elif 'acs' in req['get_data']:
         req['post_data']['SAMLResponse'] = req['get_data']['SAMLResponse']
