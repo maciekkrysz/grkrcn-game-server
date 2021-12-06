@@ -51,7 +51,8 @@ def game_lobbies(request, game_name):
     for game in games:
         id, _ = game.popitem()
         game_info = redis_game_info('games', game_name, id)
-        games_to_send.append(game_info)
+        if len(game_info['players']) > 0:
+            games_to_send.append(game_info)
     return JsonResponse({'lobbies': games_to_send})
 
 
