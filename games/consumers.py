@@ -164,6 +164,7 @@ class GameConsumer(AsyncWebsocketConsumer):
         state = current_state(self.type_game, self.room_name)
         if 'scores' in state:
             msgtype = 'scores'
+            return
         else:
             msgtype = 'current_state'
         await self.send(text_data=json.dumps({
@@ -300,7 +301,7 @@ class GameConsumer(AsyncWebsocketConsumer):
 
     async def send_scores_message(self, event):
         await self.channel_layer.group_send(
-            self.room_group_name,
+            self.user_group,
             {'type': 'end_game_message'}
         )
 
