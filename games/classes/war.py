@@ -74,13 +74,6 @@ class War(Game):
                                     random_card)
 
             elif action == 'throw' and move in poss_moves['possible_moves']:
-                if len(redis.jsonget('games', f'.{game}.stack_draw')) == 0:
-                    redis.jsonset(
-                        'games', f'.{game}.next_player', cls.get_next_player(game_id))
-                else:
-                    redis.jsonset(
-                        'games', f'.{game}.next_player', cls.current_player(game_id))
-
                 if redis.jsonget('games', f'.{game}.war_event_next_move'):
                     redis.jsonset('games', f'.{game}.war_event', True)
                 else:
@@ -121,6 +114,14 @@ class War(Game):
                     else:
                         redis.jsonset(
                             'games', f'.{game}.war_event_next_move', False)
+                    
+                if len(redis.jsonget('games', f'.{game}.stack_draw')) == 0:
+                    redis.jsonset(
+                        'games', f'.{game}.next_player', cls.get_next_player(game_id))
+                else:
+                    redis.jsonset(
+                        'games', f'.{game}.next_player', cls.current_player(game_id))
+
         else:
             return False
         redis.jsonset('games', f'.{game}.current_player',
