@@ -306,6 +306,12 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
 
     async def send_update(self, force_game_info=True):
+        if force_game_info:
+            await self.channel_layer.group_send(
+                self.room_group_name, {
+                    'type': 'games_info_message'
+                }
+            )
         # this if has to be there because after throw last card 
         # everybody still see state with one card on hand
         if is_state_to_send(self.type_game, self.room_name):
@@ -339,12 +345,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {'type': 'current_state_message'}
             )
-        if force_game_info:
-            await self.channel_layer.group_send(
-                self.room_group_name, {
-                    'type': 'games_info_message'
-                }
-            )
+        
 
     def get_user_by_saml(self):
         self.user = {}
