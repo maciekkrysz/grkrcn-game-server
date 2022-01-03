@@ -13,7 +13,7 @@ WAITING = 'waiting'
 ONGOING = 'ongoing'
 FINISHED = 'finished'
 MAX_TIMEOUT = 30
-INACTIVE_PINGS_DISC = 3
+INACTIVE_PINGS_DISC = 5
 
 
 class Game(ABC):
