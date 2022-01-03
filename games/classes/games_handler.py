@@ -237,18 +237,13 @@ def send_scores_to_rabbitmq(game_type, game_id, scores):
                 for userid in game_class.get_players_ids(game_id):
                     nickname = game_class.get_nickname_from_id(game_id, userid)
                     jsondata['players'][userid] = game_class.get_user_score(
-                            game_id, nickname)
-                    jsondata['players'][userid]['score'] = 'draw'
-                    jsondata['players'][userid]['points'] = -1
+                            game_id, nickname, 'draw')
             else:
                 for endtype in scores['scores'].items():
                     for nickname in endtype[1]:
                         userid = game_class.get_id_from_nickname(game_id, nickname)
                         jsondata['players'][userid] = game_class.get_user_score(
-                            game_id, nickname)
-                        jsondata['players'][userid]['score'] = endtype[0]
-                        if jsondata['players'][userid]['score'] == 'lose':
-                            jsondata['players'][userid]['points'] = -5
+                            game_id, nickname, endtype[0])
             send_game_data(jsondata)
             game_class.set_scores_send(game_id, True)
             game_class.update_rankings(game_id, jsondata)

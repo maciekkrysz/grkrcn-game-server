@@ -7,6 +7,7 @@ import math
 from ..models import GameType, Participation
 from .cards_utils import get_cards_deck, get_random_hand
 from ..redis_utils import redis
+from ..ranking import calculate_elo
 
 HASH_GAME_LEN = 4
 WAITING = 'waiting'
@@ -487,14 +488,30 @@ class Game(ABC):
         return {'scores': scores, 'reason': reason}
 
     @classmethod
-    def get_user_score(cls, game_id, nickname):
+    def get_score_from_scoretype(cls, scoretype):
+        if scoretype == 'lose':
+            return 0
+        elif scoretype == 'win':
+            return 1
+        elif scoretype == 'draw':
+            return 0.5
+
+    @classmethod
+    def get_user_score(cls, game_id, nickname, scoretype):
         game = cls.path_to_game(game_id)
         info = {}
         max_time = redis.jsonget(
             'games', f'.{game}.game_parameters.time_per_player')
         chair = cls.get_user_chair(game_id, nickname)
         # points = ranking
-        info['points'] = 10
+        user_ranking = redis.jsonget('games', f'.{game}.players.{chair}.ranking')
+        rankings = cls.get_all_rankings(game_id)
+        idx = rankings.index(user_ranking)
+        rankings.pop(idx)
+        score = cls.get_score_from_scoretype(scoretype)
+        k = 100
+        info['points'] = calculate_elo(user_ranking, rankings, score, k) - user_ranking
+        info['score'] = scoretype
         info['left'] = False
         info['moves'] = 0
         info['time_sec'] = int(max_time -
@@ -502,6 +519,14 @@ class Game(ABC):
         if nickname == cls.get_timeouted_user(game_id):
             info['left'] = True
         return info
+
+    @classmethod
+    def get_all_rankings(cls, game_id):
+        game = cls.path_to_game(game_id)
+        rankings = []
+        for chair in redis.jsonget('games', f'.{game}.players').keys():
+            rankings.append(redis.jsonget('games', f'.{game}.players.{chair}.ranking'))
+        return rankings
 
     @classmethod
     def was_scores_sent(cls, game_id):
