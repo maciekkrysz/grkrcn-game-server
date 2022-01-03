@@ -246,8 +246,8 @@ def send_scores_to_rabbitmq(game_type, game_id, scores):
                             game_id, nickname, endtype[0])
             if game_class.is_ranking_game(game_id):
                 send_game_data(jsondata)
+                game_class.update_rankings(game_id, jsondata)
             game_class.set_scores_send(game_id, True)
-            game_class.update_rankings(game_id, jsondata)
     except Exception as err:
         print(f"Unexpected {err=}, {type(err)=}")
 
