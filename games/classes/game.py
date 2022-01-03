@@ -497,6 +497,11 @@ class Game(ABC):
             return 0.5
 
     @classmethod
+    def is_ranking_game(cls, game_id):
+        game = cls.path_to_game(game_id)
+        return redis.jsonget('games', f'.{game}.game_parameters.is_ranked')
+
+    @classmethod
     def get_user_score(cls, game_id, nickname, scoretype):
         game = cls.path_to_game(game_id)
         info = {}
