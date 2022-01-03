@@ -515,7 +515,7 @@ class Game(ABC):
         rankings.pop(idx)
         score = cls.get_score_from_scoretype(scoretype)
         k = 100
-        info['points'] = calculate_elo(user_ranking, rankings, score, k) - user_ranking
+        info['points'] = int(calculate_elo(user_ranking, rankings, score, k)) - user_ranking
         info['score'] = scoretype
         info['left'] = False
         info['moves'] = 0
