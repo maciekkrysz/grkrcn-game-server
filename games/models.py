@@ -21,7 +21,7 @@ class GameType(SafeDeleteModel):
 class Game(models.Model):
     # one card=two symbols; card deck=56 cards
     # chess FEN max length=90 symbols
-    start_state = models.CharField(max_length=255)
+    start_state = models.JSONField()
     game_type = models.ForeignKey(
         GameType,
         on_delete=models.CASCADE,
@@ -54,7 +54,7 @@ class Participation(models.Model):
     objects = ParticipationManager()
 
     def __str__(self):
-        return str(self.game.pk) + '-' + str(self.user)
+        return 'g' + str(self.game.pk) + '-u' + str(self.user)
 
 
 class Move(models.Model):
@@ -62,8 +62,9 @@ class Move(models.Model):
         Participation,
         on_delete=models.CASCADE,
     )
-    move = ArrayField(models.CharField(max_length=6), blank=True)
+    action = models.CharField(max_length=6)
+    move = models.CharField(max_length=6)
     objects = MoveManager
 
     def __str__(self):
-        return str(self.participation.user) + ': ' + str(self.move)
+        return str(self.participation) + ': ' + str(self.move)

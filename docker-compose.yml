@@ -33,7 +33,7 @@ services:
       - postgres
       
   redis:
-    image: "redis:alpine"
+    image: "redislabs/rejson:latest"
 
 volumes:
   postgres_data:
