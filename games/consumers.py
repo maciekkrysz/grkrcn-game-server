@@ -1,3 +1,4 @@
+from cgitb import text
 import json
 from channels.generic.websocket import AsyncWebsocketConsumer
 from .classes.games_handler import connect_to_game, current_user_id, debug_info, get_all_user_ids, \
@@ -28,7 +29,7 @@ MESSAGES = PUBLIC_MESSAGES | {
 class GameConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         # SAML VERIFICATION
-        self.get_user_by_saml()
+        self.user = self.get_user_by_saml()
 
         self.type_game = self.scope['url_route']['kwargs']['type_game']
         self.room_name = self.scope['url_route']['kwargs']['room_id']
@@ -47,6 +48,9 @@ class GameConsumer(AsyncWebsocketConsumer):
         )
         if connect_to_game(self.type_game, self.room_name, self.user):
             await self.accept()
+        else:
+            await self.disconnect(103)
+            return
         request_for_ranking(self.type_game, self.room_name, [self.user['id']])
 
         await self.channel_layer.group_send(
@@ -115,7 +119,6 @@ class GameConsumer(AsyncWebsocketConsumer):
         }))
 
     async def ready_message(self, event):
-
         mark_ready(self.type_game, self.room_name,
                    self.user['nickname'], event['value'])
         await self.channel_layer.group_send(
@@ -312,7 +315,7 @@ class GameConsumer(AsyncWebsocketConsumer):
                     'type': 'games_info_message'
                 }
             )
-        # this if has to be there because after throw last card 
+        # this if has to be there because after throw last card
         # everybody still see state with one card on hand
         if is_state_to_send(self.type_game, self.room_name):
             await self.channel_layer.group_send(
@@ -345,13 +348,13 @@ class GameConsumer(AsyncWebsocketConsumer):
                 self.room_group_name,
                 {'type': 'current_state_message'}
             )
-        
 
     def get_user_by_saml(self):
-        self.user = {}
+        user = {}
         print(self.scope['session']._wrapped.__dict__)
         sessiondata = self.scope['session']._wrapped._session_cache
-        self.user['id'] = int(sessiondata['samlUserdata']['user_id'][0])
-        self.user['nickname'] = sessiondata['samlUserdata']['user_nickname'][0]
-        self.user['ranking'] = 0
-        print(f'connected user: {self.user}')
+        user['id'] = int(sessiondata['samlUserdata']['user_id'][0])
+        user['nickname'] = sessiondata['samlUserdata']['user_nickname'][0]
+        user['ranking'] = 1000
+        print(f'connected user: {user}')
+        return user

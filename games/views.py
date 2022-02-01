@@ -41,10 +41,11 @@ def games(request):
     data = list(GameType.objects.all().values('type_name', 'description'))
     for game in data:
         game['name'] = normalize_str(game['type_name']).lower()
-    request.session['cos'] = 'costam'
-    request.session['cos2'] = 'costam'
-    if not request.session.session_key:
-        request.session.save()
+    try:
+        if not request.session.session_key:
+            request.session.save()
+    except:
+        pass
     return JsonResponse(data, safe=False)
 
 
