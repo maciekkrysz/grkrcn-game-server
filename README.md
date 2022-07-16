@@ -15,7 +15,7 @@
 
 
 # 1. About
-Microservice module for handling card games and the ranking system in the web application for card games. The second one microservice is rensponsible for user accounts. Game-server storages data in PostgreSQL database which is not directly shared with other microservice. Communication between microservices uses RabbitMQ queues. Architecture is graphicly describes in [Architecture diagram](README.md#12-architecture-diagram)
+Microservice module for handling card games and the ranking system in the web application for card games. The second one microservice is rensponsible for user accounts. Game-server storages data in PostgreSQL database which is not directly shared with other microservice. Communication between microservices uses RabbitMQ queues. Architecture is graphicly described in [Architecture diagram](README.md#12-architecture-diagram)
 
 
 ## 1.1 Technologies
