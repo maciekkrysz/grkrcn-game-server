@@ -32,7 +32,9 @@ Microservice module for handling card games and the ranking system in the web ap
 
 ## 1.2 Architecture diagram
 TODO: translate UML diagrams to english
-![obraz](https://user-images.githubusercontent.com/63737298/179371731-9fdb66fa-1385-4988-88a8-b5a03b03d7b3.png)
+
+![obraz](https://user-images.githubusercontent.com/63737298/179372483-6ecb66ab-4849-4738-a5aa-1b15e37f5a20.png)
+
 
 
 
