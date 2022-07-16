@@ -1,5 +1,19 @@
 # gr-_-krcn-game-server
 
+# Table of contents
+1. [About](#1-about)
+    1. [Technologies](#11-technologies)
+    2. [Architecture diagram](#12-architecture-diagram)
+2. [Project setup](#2-project-setup)
+    1. [Docker](#21-docker)
+    2. [Without Docker](#22-without-docker)
+    3. [Development server](#23-development-server)
+3. [Other](#3-other)
+    1. [Testing](#31-testing)
+    2. [Populating DB](#32-populating-db)
+    3. [Creating admin (superuser)](#33-creating-admin-superuser)
+
+
 # 1. About
 Microservice module for handling card games and the ranking system in the web application for card games. The second one microservice is rensponsible for user accounts. Game-server storages data in PostgreSQL database which is not directly shared with other microservice. Communication between microservices uses RabbitMQ queues. Architecture is graphicly describes in [Architecture diagram](README.md#12-architecture-diagram)
 
@@ -15,6 +29,7 @@ Microservice module for handling card games and the ranking system in the web ap
 - Docker/Docker compose
 - PlantUML
 
+
 ## 1.2 Architecture diagram
 TODO: translate UML diagrams to english
 ![obraz](https://user-images.githubusercontent.com/63737298/179371731-9fdb66fa-1385-4988-88a8-b5a03b03d7b3.png)
@@ -22,7 +37,25 @@ TODO: translate UML diagrams to english
 
 
 # 2. Project setup
-## 2.1 Without docker
+## 2.1 Docker
+### Build image
+```
+docker-compose up --build
+```
+
+### Start celery
+```
+docker compose exec game_server celery -A gameserver beat -l info
+docker compose exec game_server celery -A gameserver worker -l info
+```
+
+### Add ranking worker
+```
+docker compose exec game_server python games/ranking_worker.py
+```
+
+
+## 2.2 Without Docker
 ### Setup virtual env and pip.
 ```
 $ virtualenv grkrcn-env
@@ -43,22 +76,6 @@ $ pip install -r requirements.txt
 ### .env
 Create .env file or rename .env.local to .env
 
-## 2.2 Docker
-### Build image
-```
-docker-compose up --build
-```
-
-### Start celery
-```
-docker compose exec game_server celery -A gameserver beat -l info
-docker compose exec game_server celery -A gameserver worker -l info
-```
-
-### Add ranking worker
-```
-docker compose exec game_server python games/ranking_worker.py
-```
 
 ## 2.3 Development server
 ### Security in production
@@ -76,6 +93,7 @@ $ python manage.py migrate
 ```
 $ python manage.py runserver
 ```
+
 
 # 3. Other
 ## 3.1 Testing
