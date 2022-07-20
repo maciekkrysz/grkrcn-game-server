@@ -3,7 +3,8 @@
 # Table of contents
 1. [About](#1-about)
     1. [Technologies](#11-technologies)
-    2. [Architecture diagram](#12-architecture-diagram)
+    2. [Screenshots](#12-screenshots)
+    3. [Architecture diagram](#13-architecture-diagram)
 2. [Project setup](#2-project-setup)
     1. [Docker](#21-docker)
     2. [Without Docker](#22-without-docker)
@@ -29,8 +30,20 @@ Microservice module for handling card games and the ranking system in the web ap
 - Docker/Docker compose
 - PlantUML
 
+## 1.2 Screenshots
+### Game interface
+![obraz](https://user-images.githubusercontent.com/63737298/180075941-8ae5a86e-983b-4919-b625-d4a237b598a9.png)
 
-## 1.2 Architecture diagram
+
+### Creating lobby
+![obraz](https://user-images.githubusercontent.com/63737298/180075810-06b4f8b0-66d3-40bb-a7e3-31b95de9f1a6.png)
+
+### lobby
+![obraz](https://user-images.githubusercontent.com/63737298/180075865-ef3b55df-0d38-4206-98de-024eb141b153.png)
+
+
+
+## 1.3 Architecture diagram
 TODO: translate UML diagrams to english
 
 ![obraz](https://user-images.githubusercontent.com/63737298/179372483-6ecb66ab-4849-4738-a5aa-1b15e37f5a20.png)
