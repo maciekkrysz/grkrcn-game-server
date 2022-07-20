@@ -34,9 +34,11 @@ Microservice module for handling card games and the ranking system in the web ap
 ### Game interface
 ![obraz](https://user-images.githubusercontent.com/63737298/180075941-8ae5a86e-983b-4919-b625-d4a237b598a9.png)
 
-
 ### Creating lobby
-![obraz](https://user-images.githubusercontent.com/63737298/180075810-06b4f8b0-66d3-40bb-a7e3-31b95de9f1a6.png)
+<div align="left">
+    <img src="https://user-images.githubusercontent.com/63737298/180075810-06b4f8b0-66d3-40bb-a7e3-31b95de9f1a6.png" width="600px"</img> 
+</div>
+
 
 ### lobby
 ![obraz](https://user-images.githubusercontent.com/63737298/180075865-ef3b55df-0d38-4206-98de-024eb141b153.png)
